@@ -41,6 +41,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 dump.rdb
+backend/celerybeat-schedule
 
 # System files
 .DS_Store
@@ -51,6 +52,7 @@ __pycache__/
 *pyc*
 venv/
 .venv/
+.venv311/
 
 # Development tools
 chainlit.md
