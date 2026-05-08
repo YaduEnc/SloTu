@@ -15,7 +15,7 @@ from app.models.otp_request import OTPRequest
 from app.models.seller_profile import SellerProfile
 from app.models.user import User
 from app.schemas.auth import LoginResponse, OTPSendResponse, RefreshResponse
-from app.schemas.user import MeResponse, SellerProfilePublic, UserResponse
+from app.schemas.user import MeResponse, SellerProfileResponse, UserResponse
 from app.services.otp_service import generate_otp, send_otp
 
 
@@ -225,5 +225,5 @@ async def get_me(db: AsyncSession, user: User) -> MeResponse:
     seller_profile = await db.scalar(select(SellerProfile).where(SellerProfile.user_id == user.id))
     return MeResponse(
         **UserResponse.model_validate(user).model_dump(),
-        seller_profile=SellerProfilePublic.model_validate(seller_profile) if seller_profile else None,
+        seller_profile=SellerProfileResponse.model_validate(seller_profile) if seller_profile else None,
     )

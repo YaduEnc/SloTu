@@ -1,0 +1,406 @@
+SLOTU BACKEND PROGRESS TRACER
+Last updated: 2026-05-08
+
+Purpose
+- This file is a live tracer for the backend implementation.
+- It records what is fully working right now, how each feature behaves, which files own the logic, what infrastructure it depends on, and what is still incomplete.
+- Treat this as the fastest operational snapshot of the backend.
+
+======================================================================
+1. CURRENT BACKEND STATUS
+======================================================================
+
+Overall state
+- Backend has been moved from the old placeholder server to a real FastAPI project.
+- Local development is Docker-based and currently works.
+- PostgreSQL, Redis, Celery worker, Celery beat, Flower, and API containers are set up.
+- Core schema is implemented through SQLAlchemy models and the first Alembic migration.
+- Authentication and first user onboarding flows are implemented and tested.
+
+Working local stack
+- API service: backend/app/main.py
+- Docker stack: backend/docker-compose.yml
+- Docker image: backend/Dockerfile
+- Alembic config: backend/alembic.ini
+- Database connection layer: backend/app/db.py
+- App settings: backend/app/config.py
+
+Verified local commands
+- cd backend
+- docker compose up -d --build
+- docker compose exec -T api alembic upgrade head
+- docker compose exec -T api pytest tests -q
+
+Current automated result
+- Backend test suite result: 11 passed
+
+======================================================================
+2. PROJECT STRUCTURE THAT NOW MATTERS
+======================================================================
+
+Primary backend folders
+- backend/app/api
+- backend/app/services
+- backend/app/models
+- backend/app/schemas
+- backend/alembic/versions
+- backend/tests
+
+Most important files
+- backend/app/main.py
+- backend/app/api/router.py
+- backend/app/api/auth.py
+- backend/app/api/users.py
+- backend/app/services/auth_service.py
+- backend/app/services/user_service.py
+- backend/app/services/otp_service.py
+- backend/app/deps.py
+- backend/alembic/versions/20250508_01_initial_schema.py
+
+======================================================================
+3. DATABASE LAYER: IMPLEMENTED
+======================================================================
+
+Status
+- Implemented
+- Functional locally
+- Migration successfully runs on PostgreSQL in Docker
+
+Owning files
+- backend/app/models/
+- backend/alembic/versions/20250508_01_initial_schema.py
+
+Implemented tables
+- users
+- otp_requests
+- seller_profiles
+- listings
+- orders
+- escrow_transactions
+- credentials_vault
+- reviews
+- disputes
+- notifications
+- payouts
+- audit_log
+- waitlist
+
+What is working
+- SQLAlchemy model classes exist for the documented schema.
+- Initial schema migration creates the documented tables, indexes, checks, and update triggers.
+- Audit log uses a bigserial-style identity primary key.
+- The migration has been tested from base to head in Docker.
+
+What this enables
+- User creation and login state
+- OTP request tracking
+- Seller onboarding state
+- Future order, escrow, review, dispute, and payout work
+
+======================================================================
+4. HEALTH ENDPOINT: IMPLEMENTED
+======================================================================
+
+Status
+- Implemented
+- Functional
+
+Endpoint
+- GET /api/health
+
+Owning files
+- backend/app/api/health.py
+- backend/app/services/health_service.py
+
+Behavior
+- Returns app version
+- Checks database connectivity
+- Checks Redis connectivity
+- Returns degraded if dependencies are down
+
+Why it matters
+- This is the fastest readiness check for local Docker and deployment targets.
+
+======================================================================
+5. AUTH SYSTEM: IMPLEMENTED
+======================================================================
+
+Status
+- Implemented
+- Functional locally
+- Tested
+
+Endpoints
+- POST /api/auth/otp/send
+- POST /api/auth/otp/verify
+- POST /api/auth/refresh
+- POST /api/auth/logout
+- GET /api/auth/me
+
+Owning files
+- backend/app/api/auth.py
+- backend/app/services/auth_service.py
+- backend/app/services/otp_service.py
+- backend/app/core/security.py
+- backend/app/deps.py
+
+How OTP send works
+1. Client calls POST /api/auth/otp/send with a phone number.
+2. Phone number is normalized into +91XXXXXXXXXX format.
+3. Rate limits are checked using otp_requests history.
+4. A 6-digit OTP is generated.
+5. The OTP is bcrypt-hashed and stored in otp_requests.
+6. SMS dispatch is attempted through the OTP service.
+7. The API returns request_id and expires_in.
+
+How OTP verify works
+1. Client calls POST /api/auth/otp/verify with request_id, phone, and otp.
+2. The API loads otp_requests row by UUID.
+3. It checks ownership, expiry, consumed flag, and max attempts.
+4. The hashed OTP is verified.
+5. If the user does not exist yet, a users row is created.
+6. access_token is issued.
+7. refresh_token is issued into an HttpOnly cookie.
+8. The OTP row is marked consumed.
+
+How refresh works
+1. Client calls POST /api/auth/refresh with refresh cookie.
+2. Refresh JWT is decoded.
+3. Previous refresh JTI is blacklisted in Redis.
+4. New access token is returned.
+5. New refresh cookie is set.
+
+How logout works
+1. Client calls POST /api/auth/logout.
+2. Refresh token JTI is blacklisted in Redis.
+3. Refresh cookie is deleted.
+
+How auth/me works
+1. Client sends Authorization: Bearer <access_token>.
+2. Shared dependency loads the authenticated user.
+3. API returns user details plus seller_profile if available.
+
+Important auth details already handled
+- Indian phone normalization
+- OTP hashing
+- OTP attempt limits
+- OTP send rate limits
+- Refresh rotation
+- Redis blacklist
+- Invalid client host handling for INET rate-limit checks
+- UUID-safe request validation
+- Secure cookie configuration support via settings
+
+Current local SMS behavior
+- If Fast2SMS credentials are absent, development mode logs the OTP flow instead of sending a real SMS.
+- Real provider failure returns SMS_PROVIDER_DOWN.
+
+======================================================================
+6. USER PROFILE + SELLER ONBOARDING: IMPLEMENTED
+======================================================================
+
+Status
+- Implemented
+- Functional locally
+- Tested
+
+Endpoints
+- PATCH /api/users/me
+- POST /api/users/become-seller
+- POST /api/users/seller/upi
+- POST /api/users/seller/aadhaar/send-otp
+- POST /api/users/seller/aadhaar/verify-otp
+
+Owning files
+- backend/app/api/users.py
+- backend/app/services/user_service.py
+- backend/app/schemas/user.py
+
+PATCH /api/users/me
+Behavior
+- Auth required
+- Allows updating name and email
+- Trims name input
+- Validates email format
+- Rejects duplicate email addresses with EMAIL_TAKEN
+
+POST /api/users/become-seller
+Behavior
+- Auth required
+- Creates seller_profiles row if missing
+- Promotes user role to seller unless current role is admin
+- Returns seller profile state
+- Current created state is kyc_status=pending
+
+POST /api/users/seller/upi
+Behavior
+- Auth required
+- Requires existing seller profile
+- Validates UPI ID format
+- In development mode, marks UPI as verified immediately
+- Stores upi_id and upi_verified on seller_profiles
+
+POST /api/users/seller/aadhaar/send-otp
+Behavior
+- Auth required
+- Requires existing seller profile
+- Validates 12-digit Aadhaar format
+- Creates a temporary KYC request in Redis
+- Stores:
+  - user_id
+  - hashed KYC OTP
+  - hashed Aadhaar last 4 digits
+  - seller_profile_id
+- Returns kyc_request_id
+
+POST /api/users/seller/aadhaar/verify-otp
+Behavior
+- Auth required
+- Loads the temporary Redis-backed KYC request
+- Verifies ownership
+- Verifies OTP
+- Marks seller profile as:
+  - aadhaar_verified=true
+  - kyc_status=approved
+- Stores only the one-way hash of Aadhaar last 4 digits
+- Deletes temporary Redis request after success
+
+Important note
+- Aadhaar number itself is NOT stored in the database.
+- Only the one-way hash of the last 4 digits is stored after successful verification.
+
+======================================================================
+7. SHARED AUTH DEPENDENCY: IMPLEMENTED
+======================================================================
+
+Status
+- Implemented
+- Functional
+
+Owning file
+- backend/app/deps.py
+
+What it does
+- Reads Authorization header
+- Validates Bearer format
+- Decodes the access token
+- Loads the authenticated user
+- Reused by protected routes
+
+This matters because
+- New protected endpoints no longer need to duplicate token parsing logic.
+
+======================================================================
+8. TESTING STATUS: IMPLEMENTED
+======================================================================
+
+Status
+- Implemented
+- Passing
+
+Owning files
+- backend/tests/conftest.py
+- backend/tests/test_health.py
+- backend/tests/test_auth.py
+- backend/tests/test_users.py
+
+What is tested
+- health endpoint success path
+- health endpoint degraded path
+- OTP send path
+- OTP verify success path
+- OTP max attempt enforcement
+- refresh rotation
+- logout invalidation
+- user profile update
+- duplicate email rejection
+- become seller flow
+- UPI onboarding flow
+- Aadhaar OTP onboarding flow
+
+Test harness notes
+- Tests run against PostgreSQL in Docker
+- App DB sessions are overridden for stable test isolation
+- Redis is replaced by a test fake for deterministic token/KYC behavior
+- Database tables are truncated between tests
+
+======================================================================
+9. WHAT IS FULLY FUNCTIONAL RIGHT NOW
+======================================================================
+
+Fully functional in local backend
+- Dockerized backend runtime
+- Health checks
+- Initial PostgreSQL schema migration
+- Phone OTP login flow
+- JWT access token generation
+- Refresh cookie rotation
+- Logout blacklist flow
+- Current-user endpoint
+- User profile update
+- Seller profile creation
+- Development-mode UPI verification flow
+- Development-mode Aadhaar OTP flow
+- End-to-end automated tests for all above items
+
+======================================================================
+10. WHAT IS PARTIALLY IMPLEMENTED / DEV-STUBBED
+======================================================================
+
+UPI verification
+- Current local behavior is development-safe.
+- In development mode, a valid-format UPI ID is marked verified without calling a live verification provider.
+- This keeps the flow testable while the real provider integration is still pending.
+
+Aadhaar KYC
+- Current local behavior uses a Redis-backed temporary OTP request.
+- This simulates the send/verify flow.
+- Real external provider calls are not wired yet.
+
+SMS sending
+- Local development falls back to non-live OTP behavior when Fast2SMS credentials are absent.
+
+======================================================================
+11. WHAT IS NOT BUILT YET
+======================================================================
+
+Still pending
+- Real Cashfree/verification-provider UPI validation
+- Real Aadhaar/KYC provider integration
+- Public seller profile endpoint
+- Listings API
+- Orders API
+- Payments API
+- Disputes API
+- Reviews API
+- Notifications API
+- Payout orchestration
+- Vault encryption delivery flows
+
+======================================================================
+12. NEXT RECOMMENDED IMPLEMENTATION ORDER
+======================================================================
+
+Recommended next sequence
+1. Replace dev UPI verification with real provider validation
+2. Replace Redis Aadhaar stub with real KYC provider flow
+3. Add public seller profile endpoint
+4. Add seller listing creation and management
+5. Add order creation and payment session flow
+
+======================================================================
+13. QUICK LOCAL CHECKLIST
+======================================================================
+
+If backend appears broken, check in this order
+1. docker compose ps
+2. docker compose logs api --tail=100
+3. docker compose exec -T api alembic upgrade head
+4. docker compose exec -T api pytest tests -q
+5. GET /api/health
+
+Current expected local health
+- API up
+- Postgres up
+- Redis up
+- Tests passing

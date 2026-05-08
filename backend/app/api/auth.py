@@ -1,11 +1,12 @@
 import ipaddress
 
-from fastapi import APIRouter, Depends, Header, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.exceptions import AppError
 from app.db import get_db
+from app.deps import get_current_user
+from app.models.user import User
 from app.schemas.auth import (
     LoginResponse,
     OTPSendRequest,
@@ -15,7 +16,6 @@ from app.schemas.auth import (
 )
 from app.schemas.user import MeResponse
 from app.services.auth_service import (
-    get_current_user_from_token,
     get_me,
     logout,
     refresh_access_token,
@@ -83,10 +83,7 @@ async def logout_user(response: Response, request: Request) -> Response:
 
 @router.get("/me", response_model=MeResponse, status_code=status.HTTP_200_OK)
 async def get_current_me(
-    authorization: str | None = Header(default=None),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MeResponse:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise AppError(401, "UNAUTHENTICATED", "Authentication required")
-    user = await get_current_user_from_token(db, authorization.removeprefix("Bearer ").strip())
-    return await get_me(db, user)
+    return await get_me(db, current_user)

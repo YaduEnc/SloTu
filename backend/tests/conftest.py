@@ -13,7 +13,7 @@ os.environ.setdefault("REDIS_URL", "redis://:password@localhost:6379/0")
 
 from app.db import get_db
 from app.main import create_app
-from app.services import auth_service
+from app.services import auth_service, user_service
 
 TEST_TABLES = (
     "waitlist",
@@ -58,6 +58,9 @@ class FakeRedis:
         self._store.clear()
         return True
 
+    async def delete(self, key: str) -> int:
+        return 1 if self._store.pop(key, None) is not None else 0
+
 
 def reset_db() -> None:
     with sync_engine.begin() as connection:
@@ -75,6 +78,7 @@ def clean_state() -> Generator[None, None, None]:
 def fake_redis(monkeypatch: pytest.MonkeyPatch) -> Generator[FakeRedis, None, None]:
     redis = FakeRedis()
     monkeypatch.setattr(auth_service, "redis_client", redis)
+    monkeypatch.setattr(user_service, "redis_client", redis)
     yield redis
 
 
