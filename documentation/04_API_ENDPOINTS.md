@@ -48,7 +48,6 @@ Request:
   "expires_in": 900,
   "user": {
     "id": "uuid",
-    "phone": null,
     "name": null,
     "email": "aman@example.com",
     "role": "buyer",
@@ -94,22 +93,16 @@ Request: `{ "upi_id": "aman@okhdfcbank" }`
 - Saves the UPI ID to the seller profile.
 - Leaves `upi_verified=false`.
 - Moves `kyc_status` from `pending` to `submitted` if no stronger verification has been completed yet.
-- Response 200 includes a lightweight status summary.
+- Response 200:
+```json
+{
+  "upi_id": "aman@okhdfcbank",
+  "upi_verified": false,
+  "verification_status": "FORMAT_VALID"
+}
+```
 
-### `POST /api/users/seller/aadhaar/send-otp`
-Request: `{ "aadhaar": "123456789012" }`
-- Optional flow in current v1 direction.
-- Calls KYC provider (Karza / Sandbox / IDfy). Provider issues OTP to Aadhaar-linked mobile.
-- DO NOT store Aadhaar number. Store only one-way hash of last 4 digits.
-- Response 200: `{ "kyc_request_id": "..." }`
-
-### `POST /api/users/seller/aadhaar/verify-otp`
-Request: `{ "kyc_request_id": "...", "otp": "123456" }`
-- Optional flow in current v1 direction.
-- On success: `aadhaar_verified=true`, `kyc_status=approved`.
-- Response 200: full seller_profile.
-
-### `GET /api/users/seller/:user_id/public`
+### `GET /api/users/seller/{user_id}/public`
 - Public. Returns seller's public profile (name, trust_score, total_sales, kyc_verified, member_since). NEVER PII.
 
 ---
@@ -152,12 +145,12 @@ Response 200:
 }
 ```
 
-### `GET /api/listings/:id`
-- Public. Increments `views` (rate-limited per IP per listing per minute).
+### `GET /api/listings/{id}`
+- Public. Increments `views` on each detail load.
 - Response: same as item above + last 10 reviews.
 
 ### `POST /api/listings`
-- Auth: seller, KYC approved.
+- Auth: seller.
 - Request:
 ```json
 {
@@ -169,21 +162,22 @@ Response 200:
 }
 ```
 - Validations: service_slug must be in allow-list constant. Price between ₹19 and ₹1999.
-- Creates listing in `status=draft` until vault has at least 1 credential entry — then auto `active`.
+- Requires seller_profile to exist and `upi_id` to already be saved.
+- Creates listing in `status=draft`.
 - Response 201: full listing.
 
-### `PATCH /api/listings/:id`
+### `PATCH /api/listings/{id}`
 - Auth: seller (owner only).
-- Editable: `price_paise`, `slots_total`, `description`, `status` (only between `active` ↔ `paused`).
+- Editable: `price_paise`, `slots_total`, `description`, `status` (`draft`, `active`, `paused`).
 - Response 200: updated listing.
 
-### `DELETE /api/listings/:id`
+### `DELETE /api/listings/{id}`
 - Auth: seller (owner). Sets `status='removed'` and `deleted_at`.
-- Cannot remove if any active orders exist (status in pending/paid/delivered).
+- Cannot remove if any active orders exist (status in pending/paid/delivered/disputed).
 - Response 204.
 
 ### `GET /api/listings/me`
-- Auth: seller. Returns own listings with sales count + revenue.
+- Auth: seller. Returns own listings with revenue, active order count, and credential-ready flag.
 
 ### `GET /api/listings/services/catalog`
 - Public. Returns supported services list (slug, name, category, logo_url, ToS allows sharing? bool).

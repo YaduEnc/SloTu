@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,13 +11,21 @@ from app.schemas.user import (
     AadhaarSendOtpResponse,
     AadhaarVerifyOtpRequest,
     BecomeSellerResponse,
+    PublicSellerProfileResponse,
     SellerProfileResponse,
     UpiSetRequest,
     UpiSetResponse,
     UserResponse,
     UserUpdateRequest,
 )
-from app.services.user_service import become_seller, send_aadhaar_otp, set_seller_upi, update_me, verify_aadhaar_otp
+from app.services.user_service import (
+    become_seller,
+    get_public_seller_profile,
+    send_aadhaar_otp,
+    set_seller_upi,
+    update_me,
+    verify_aadhaar_otp,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,6 +37,14 @@ async def update_current_user(
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     return await update_me(db, current_user, payload)
+
+
+@router.get("/seller/{user_id}/public", response_model=PublicSellerProfileResponse, status_code=status.HTTP_200_OK)
+async def get_seller_public_profile(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> PublicSellerProfileResponse:
+    return await get_public_seller_profile(db, user_id)
 
 
 @router.post("/become-seller", response_model=BecomeSellerResponse, status_code=status.HTTP_201_CREATED)

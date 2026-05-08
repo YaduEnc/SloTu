@@ -14,6 +14,7 @@ from app.models.seller_profile import SellerProfile
 from app.models.user import User
 from app.schemas.user import (
     AadhaarSendOtpResponse,
+    PublicSellerProfileResponse,
     SellerProfileResponse,
     UpiSetResponse,
     UserResponse,
@@ -28,11 +29,43 @@ def _serialize_seller_profile(profile: SellerProfile) -> SellerProfileResponse:
     return SellerProfileResponse.model_validate(profile)
 
 
+def _public_seller_name(user: User) -> str:
+    if user.name:
+        parts = [part for part in user.name.strip().split() if part]
+        if len(parts) > 1:
+            return f"{parts[0]} {parts[-1][0].upper()}."
+        if parts:
+            return parts[0]
+    if user.email:
+        local = user.email.split("@", 1)[0]
+        return local.split(".")[0].replace("_", " ").replace("-", " ").strip().title() or "Seller"
+    return "Seller"
+
+
 async def _get_seller_profile(db: AsyncSession, user: User) -> SellerProfile:
     seller_profile = await db.scalar(select(SellerProfile).where(SellerProfile.user_id == user.id))
     if seller_profile is None:
         raise AppError(403, "SELLER_PROFILE_REQUIRED", "Seller onboarding required")
     return seller_profile
+
+
+async def get_public_seller_profile(db: AsyncSession, user_id: uuid.UUID) -> PublicSellerProfileResponse:
+    user = await db.get(User, user_id)
+    if user is None:
+        raise AppError(404, "SELLER_NOT_FOUND", "Seller not found")
+
+    seller_profile = await db.scalar(select(SellerProfile).where(SellerProfile.user_id == user_id))
+    if seller_profile is None:
+        raise AppError(404, "SELLER_NOT_FOUND", "Seller not found")
+
+    return PublicSellerProfileResponse(
+        id=user.id,
+        name=_public_seller_name(user),
+        trust_score=float(seller_profile.trust_score or 0),
+        total_sales=seller_profile.total_sales,
+        kyc_verified=seller_profile.upi_verified or seller_profile.kyc_status == "approved",
+        member_since=seller_profile.created_at,
+    )
 
 
 async def update_me(db: AsyncSession, user: User, payload: UserUpdateRequest) -> UserResponse:

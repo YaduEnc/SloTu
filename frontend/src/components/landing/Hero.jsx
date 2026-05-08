@@ -330,8 +330,8 @@ export default function Hero() {
           <div className="flex items-center gap-3 px-6 py-4">
             <Fingerprint className="h-4 w-4 text-emerald-400 flex-shrink-0" />
             <div className="text-xs sm:text-sm">
-              <span className="text-zinc-500">Sellers KYC'd via</span>{" "}
-              <span className="text-zinc-100 font-medium">Aadhaar OTP</span>
+              <span className="text-zinc-500">Access secured with</span>{" "}
+              <span className="text-zinc-100 font-medium">Email OTP</span>
             </div>
           </div>
           <div className="flex items-center gap-3 px-6 py-4">

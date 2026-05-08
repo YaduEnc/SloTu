@@ -90,9 +90,16 @@ export const users = {
   updateMe: (payload) => api.patch("/users/me", payload).then((r) => r.data),
   becomeSeller: () => api.post("/users/become-seller").then((r) => r.data),
   setUpi: (upi_id) => api.post("/users/seller/upi", { upi_id }).then((r) => r.data),
-  aadhaarSendOtp: (aadhaar) => api.post("/users/seller/aadhaar/send-otp", { aadhaar }).then((r) => r.data),
-  aadhaarVerifyOtp: (kyc_request_id, otp) =>
-    api.post("/users/seller/aadhaar/verify-otp", { kyc_request_id, otp }).then((r) => r.data),
+};
+
+export const listings = {
+  listPublic: (params = {}) => api.get("/listings", { params }).then((r) => r.data),
+  detail: (id) => api.get(`/listings/${id}`).then((r) => r.data),
+  listMine: (params = {}) => api.get("/listings/me", { params }).then((r) => r.data),
+  catalog: () => api.get("/listings/services/catalog").then((r) => r.data),
+  create: (payload) => api.post("/listings", payload).then((r) => r.data),
+  update: (id, payload) => api.patch(`/listings/${id}`, payload).then((r) => r.data),
+  remove: (id) => api.delete(`/listings/${id}`).then((r) => r.data).catch(() => null),
 };
 
 export default api;

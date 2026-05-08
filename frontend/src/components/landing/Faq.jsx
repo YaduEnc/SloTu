@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "Can I sell my Netflix slot?",
-    a: "If you have an empty seat on a paid family plan and the service ToS allows adding members, yes. Sign up as seller, complete phone OTP + UPI + Aadhaar verification, list your slot, and upload credentials to the encrypted vault. Funds reach your UPI within 24 hours of buyer confirmation."
+    a: "If you have an empty seat on a paid family plan and the service ToS allows adding members, yes. Sign up with email OTP, finish seller setup, add your payout UPI, create a listing draft, and upload credentials to the encrypted vault when that flow opens. Funds reach your UPI after buyer confirmation."
   },
   {
     q: "When does Slotu launch?",

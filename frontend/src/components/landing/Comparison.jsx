@@ -3,7 +3,7 @@ import { Check, X, MessageCircleOff, ShieldCheck } from "lucide-react";
 
 const rows = [
   { feature: "Money held safe until access works", slotu: true, telegram: false },
-  { feature: "Verified seller (KYC + Aadhaar)", slotu: true, telegram: false },
+  { feature: "Structured seller onboarding", slotu: true, telegram: false },
   { feature: "Refund if seller disappears", slotu: true, telegram: false },
   { feature: "Public ratings & trust score", slotu: true, telegram: false },
   { feature: "Standardised pricing", slotu: true, telegram: false },

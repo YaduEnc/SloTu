@@ -11,7 +11,7 @@ const features = [
   {
     icon: BadgeCheck,
     title: "Verified sellers only",
-    desc: "Every seller is verified with phone OTP, UPI ID validation, and Aadhaar check before listing a single slot.",
+    desc: "Every seller completes account setup, payout UPI onboarding, and in-product status checks before they start building listings.",
   },
   {
     icon: RefreshCw,

@@ -21,6 +21,15 @@ class SellerProfileResponse(BaseModel):
     member_since: datetime = Field(validation_alias="created_at")
 
 
+class PublicSellerProfileResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    trust_score: float
+    total_sales: int
+    kyc_verified: bool
+    member_since: datetime
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

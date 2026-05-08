@@ -1,5 +1,7 @@
 # 01 — Master Build Prompt
 
+> Legacy build prompt. The current implemented product direction uses email OTP and seller onboarding via payout UPI plus listings.
+
 > **Paste this entire file as the system prompt to your backend AI agent.**
 > Then attach all other files in `/app/documentation/` as context.
 
@@ -19,7 +21,7 @@ You are a senior backend engineer tasked with building the **production-ready ba
 - Celery + Celery Beat (NOT cron)
 - Pydantic v2 for ALL request/response models
 - Cashfree Payments + Cashfree Payouts (latest API)
-- Fast2SMS (or MSG91 fallback) for OTP
+- Resend for OTP email delivery
 - AES-256-GCM for credential vault
 - Cloudflare R2 for KYC + dispute uploads (S3-compatible)
 - Docker + Nginx for deploy
@@ -29,14 +31,14 @@ You are a senior backend engineer tasked with building the **production-ready ba
 1. **Every API endpoint is prefixed `/api`** — Kubernetes ingress depends on it.
 2. **Every endpoint has a Pydantic request model AND a Pydantic response model.** No raw dicts.
 3. **Every financial amount is stored as integer paise** (₹1 = 100 paise). Never floats. Never decimals.
-4. **All phone numbers stored as `+91XXXXXXXXXX`** (E.164). Validate on input.
+4. **Current auth is email OTP**. Do not assume phone OTP is the active login path.
 5. **Every payment is verified via Cashfree webhook**. NEVER trust frontend "payment success" alone.
 6. **Webhook signatures must be verified** before any state change.
 7. **Order + escrow_transaction creation is atomic** — single DB transaction or fail.
 8. **Credential vault never returns raw credentials in any API response** — only via OTP-gated reveal endpoint.
 9. **24-hour auto-confirm uses Celery Beat**, not cron — must survive restarts.
 10. **Idempotency keys** required on payment + payout + refund endpoints.
-11. **Rate limit** all auth endpoints (OTP send max 3/min/phone, max 10/hr/phone).
+11. **Rate limit** all auth endpoints (OTP send max 3/min/email, max 10/hr/email).
 12. **Frame all transactions** as "slot sharing" / "plan member addition" in DB enums and API responses — never "account sale".
 13. **Every state change is logged** to an `audit_log` table with actor, action, before/after.
 14. **Use timezone-aware UTC datetimes** — `datetime.now(timezone.utc)`. Convert to IST only in templates.
@@ -48,8 +50,8 @@ You are a senior backend engineer tasked with building the **production-ready ba
 |-------|------|----------------------|
 | 1 | Project skeleton + Alembic + Docker compose | `02_TECH_STACK_AND_SETUP.md` |
 | 2 | DB migrations — all tables | `03_DATABASE_SCHEMA.md` |
-| 3 | Auth (OTP + JWT + role middleware) | `05_AUTH_PHONE_OTP.md`, `04_API_ENDPOINTS.md §Auth` |
-| 4 | Users + seller verification (Aadhaar OTP, UPI validate) | `04_API_ENDPOINTS.md §Users` |
+| 3 | Auth (email OTP + JWT + role middleware) | `04_API_ENDPOINTS.md §Auth` |
+| 4 | Users + seller onboarding (name, seller profile, payout UPI) | `04_API_ENDPOINTS.md §Users` |
 | 5 | Listings CRUD | `04_API_ENDPOINTS.md §Listings` |
 | 6 | Orders + escrow state machine (no payments yet) | `06_ESCROW_STATE_MACHINE.md` |
 | 7 | Cashfree Payments — create order + webhook | `07_CASHFREE_INTEGRATION.md §Payments` |

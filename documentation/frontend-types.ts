@@ -13,7 +13,6 @@
  *  - All money fields end in `_paise` and are integer paise (₹1 = 100 paise).
  *  - All datetimes are ISO 8601 UTC strings ending in 'Z'.
  *  - All IDs are UUID v4 strings.
- *  - Any phone numbers that appear are E.164 +91XXXXXXXXXX.
  *  - Pagination: { items, total, page, page_size }.
  *  - Errors: see `ApiErrorEnvelope`.
  */
@@ -25,8 +24,6 @@
 export type UUID = string;
 export type ISODate = string;          // "2026-01-01T12:34:56Z"
 export type Paise = number;            // integer paise
-export type PhoneE164 = string;        // "+91XXXXXXXXXX"
-
 export interface ApiErrorEnvelope {
   error: {
     code: ApiErrorCode;
@@ -178,7 +175,7 @@ export interface RefreshResponse {
 
 export interface User {
   id: UUID;
-  phone: PhoneE164 | null;
+  phone: string | null;              // currently null in the email-OTP flow
   name: string | null;
   email: string | null;
   role: UserRole;
@@ -197,7 +194,7 @@ export interface SellerProfile {
   user_id: UUID;
   upi_id: string | null;
   upi_verified: boolean;
-  aadhaar_verified: boolean;
+  aadhaar_verified: boolean;        // legacy optional field, not used in current onboarding UI
   trust_score: number;          // 0.0–5.0, 2 decimals
   total_sales: number;
   total_disputes: number;
@@ -227,7 +224,7 @@ export interface UpiSetResponse {
   verification_status: string;
 }
 
-export interface AadhaarSendOtpRequest { aadhaar: string; }   // optional flow, 12 digits, NEVER stored
+export interface AadhaarSendOtpRequest { aadhaar: string; }   // legacy optional flow, 12 digits, NEVER stored
 export interface AadhaarSendOtpResponse { kyc_request_id: UUID; }
 
 export interface AadhaarVerifyOtpRequest {
@@ -302,7 +299,7 @@ export interface ListingUpdateRequest {
   price_paise?: Paise;
   slots_total?: number;
   description?: string;
-  status?: "active" | "paused";
+  status?: "active" | "paused" | "draft";
 }
 
 export interface ServiceCatalogItem {
@@ -642,8 +639,8 @@ export interface HealthResponse {
 // PATCH    /api/users/me                                       UserUpdateRequest                User
 // POST     /api/users/become-seller                            —                                BecomeSellerResponse
 // POST     /api/users/seller/upi                               UpiSetRequest                    UpiSetResponse
-// POST     /api/users/seller/aadhaar/send-otp                  AadhaarSendOtpRequest            AadhaarSendOtpResponse
-// POST     /api/users/seller/aadhaar/verify-otp                AadhaarVerifyOtpRequest          AadhaarVerifyOtpResponse
+// POST     /api/users/seller/aadhaar/send-otp                  AadhaarSendOtpRequest            AadhaarSendOtpResponse   (legacy optional flow)
+// POST     /api/users/seller/aadhaar/verify-otp                AadhaarVerifyOtpRequest          AadhaarVerifyOtpResponse (legacy optional flow)
 // GET      /api/users/seller/:user_id/public                   —                                PublicSellerProfile
 //
 // GET      /api/listings                                       ListingListQuery (qs)            PaginatedResponse<Listing>

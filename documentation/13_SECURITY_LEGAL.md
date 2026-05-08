@@ -8,7 +8,7 @@
 - [ ] Secure + HttpOnly + SameSite=Lax cookies
 
 ### Authentication
-- [ ] OTP brute-force: max 5 verify per request, max 10 sends/hour/phone
+- [ ] OTP brute-force: max 5 verify per request, max 10 sends/hour/email
 - [ ] JWT short access (15 min)
 - [ ] Refresh token rotation (issue new on each use, blacklist old in Redis)
 - [ ] Logout adds JTI to blacklist
@@ -24,7 +24,6 @@
 - [ ] SQL via ORM only — no string concatenation
 - [ ] File upload size limit (5 MB for evidence, 10 MB for KYC)
 - [ ] File type whitelist (image/png|jpeg|webp, application/pdf)
-- [ ] Phone E.164 normalised + regex
 - [ ] Email RFC-validated
 
 ### Output
@@ -42,7 +41,7 @@
 
 ### Rate limiting
 - [ ] Per-IP global: 600 req/min
-- [ ] OTP send: 3/min/phone, 10/hour/phone, 30/hour/IP
+- [ ] OTP send: 3/min/email, 10/hour/email, 30/hour/IP
 - [ ] Vault reveal: 3/15min/order
 - [ ] Webhook endpoints: NOT rate-limited (Cashfree IPs whitelisted instead)
 
@@ -52,7 +51,6 @@
 - [ ] Idempotency on webhook event id
 
 ### Logging
-- [ ] Phone numbers masked in logs (`+91XX...XX10`)
 - [ ] No passwords/tokens/credentials in logs
 - [ ] Request ID on every log line for correlation
 - [ ] Sentry for unhandled exceptions
@@ -137,10 +135,10 @@ Slotu is an intermediary, not a service provider. To maintain safe-harbour:
 ## Privacy
 
 ### Data we collect
-- Phone (mandatory)
-- Name, email (optional)
+- Email (mandatory for current login flow)
+- Name
 - UPI ID, bank details (sellers only)
-- Aadhaar OTP verification result (NOT the number)
+- Aadhaar OTP verification result only if the optional legacy KYC path is used
 - Transaction history
 - Device fingerprint, IP for fraud
 

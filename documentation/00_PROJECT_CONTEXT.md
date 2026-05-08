@@ -6,7 +6,7 @@ SLOTU is a **trusted subscription slot-sharing marketplace for India**. Indians 
 
 SLOTU brings **trust, automation, and safety** to this market by acting as a structured marketplace with:
 - **Escrow payments** — Slotu holds buyer's money until access is confirmed
-- **Verified sellers** — phone OTP + UPI ID + Aadhaar verification
+- **Structured seller onboarding** — email OTP login, seller profile setup, payout UPI, trust scoring
 - **Instant credential delivery** — credentials/family-plan invites delivered automatically the moment payment confirms
 - **Trust scores** — built from real verified transactions
 - **24-hour auto-refund** — if access fails
@@ -21,7 +21,7 @@ SLOTU is **NOT the account holder**. SLOTU is the marketplace **intermediary** �
 | 2 | Manual DM handoff, hours of waiting | Auto-delivery on payment success |
 | 3 | Wild price variation, no comparison | Standardised marketplace listings |
 | 4 | No portal to track expiry, renew | Buyer dashboard with countdown + renew |
-| 5 | Zero verification of sellers | Phone OTP + UPI + Aadhaar verified |
+| 5 | Zero verification of sellers | Email OTP login + seller profile + payout UPI + trust score |
 
 ## How it works
 
@@ -36,8 +36,8 @@ SLOTU is **NOT the account holder**. SLOTU is the marketplace **intermediary** �
 8. If buyer disputes or doesn't act → **automatic full refund** logic
 
 ### Seller flow
-1. Register with phone OTP
-2. Complete seller verification (UPI ID + Aadhaar OTP)
+1. Register with email OTP
+2. Complete seller setup (name + payout UPI)
 3. Create listing (service, price, duration, slots available)
 4. Upload credentials or family-plan invite method to **encrypted vault**
 5. Get notified on each sale

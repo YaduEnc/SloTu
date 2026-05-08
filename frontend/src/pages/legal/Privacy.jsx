@@ -16,15 +16,15 @@ export default function Privacy() {
 
       <Note>
         Short version: we collect the minimum needed to run an escrow marketplace safely. We never sell your data.
-        Card details are handled by Cashfree, never us. Aadhaar numbers are never stored.
+        Card details are handled by Cashfree, never us. Login happens through email OTP and seller onboarding is kept lightweight until deeper verification is truly needed.
       </Note>
 
       <H2>1. Data we collect</H2>
 
       <H3>From all users</H3>
       <UL>
-        <LI>Phone number (mandatory, for OTP login)</LI>
-        <LI>Name and email (optional)</LI>
+        <LI>Email address (mandatory, for OTP login)</LI>
+        <LI>Name</LI>
         <LI>Device IP address, user-agent, and login timestamps</LI>
       </UL>
 
@@ -32,7 +32,6 @@ export default function Privacy() {
       <UL>
         <LI>UPI ID (for payouts)</LI>
         <LI>Bank account details if you opt for bank transfer payouts</LI>
-        <LI>One-way hash of last 4 digits of Aadhaar + Aadhaar OTP verification result (the full Aadhaar number is never stored)</LI>
         <LI>KYC documents you upload, encrypted at rest in Cloudflare R2</LI>
       </UL>
 
@@ -45,7 +44,6 @@ export default function Privacy() {
 
       <H3>What we do NOT collect</H3>
       <UL>
-        <LI>Your full Aadhaar number</LI>
         <LI>Your card or net-banking credentials (handled by Cashfree, RBI-licensed)</LI>
         <LI>Biometric data</LI>
         <LI>Browsing history outside Slotu</LI>
@@ -65,10 +63,8 @@ export default function Privacy() {
       <H2>3. Who we share data with</H2>
       <UL>
         <LI><strong className="text-zinc-100">Cashfree Payments</strong> — for payment processing (RBI-licensed)</LI>
-        <LI><strong className="text-zinc-100">Fast2SMS / MSG91</strong> — to send transactional SMS</LI>
-        <LI><strong className="text-zinc-100">SendGrid</strong> — to send transactional emails</LI>
+        <LI><strong className="text-zinc-100">Resend</strong> — to send transactional OTP and product emails</LI>
         <LI><strong className="text-zinc-100">Cloudflare R2</strong> — to store KYC documents and dispute evidence (encrypted)</LI>
-        <LI><strong className="text-zinc-100">KYC providers (Karza / IDfy)</strong> — for Aadhaar OTP verification</LI>
         <LI><strong className="text-zinc-100">Government / law enforcement</strong> — only when legally compelled, with notice to you wherever permitted</LI>
       </UL>
       <P>We do not sell your personal data. We do not run advertising on Slotu.</P>
@@ -117,7 +113,7 @@ export default function Privacy() {
 
       <H2>9. International transfers</H2>
       <P>
-        Most data is stored in India. Some processors (e.g. SendGrid for email) may store transient logs outside
+        Most data is stored in India. Some processors (e.g. Resend for email) may store transient logs outside
         India under standard contractual clauses. Encrypted credentials and KYC documents are stored on Cloudflare R2
         in an India-hosted bucket where available.
       </P>

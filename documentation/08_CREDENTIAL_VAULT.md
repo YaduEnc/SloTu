@@ -72,7 +72,7 @@ POST /api/vault/orders/:order_id/reveal/request
   ─► Order must be in 'paid' status
   ─► Rate limit: 3 per 15 min per order
   ─► Generate 6-digit OTP, bcrypt-hash, store in otp_requests
-  ─► Send via Fast2SMS to user's phone
+  ─► Send via the current OTP delivery channel
   ─► Return { request_id, expires_in: 300 }
 
 POST /api/vault/orders/:order_id/reveal/verify

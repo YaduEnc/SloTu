@@ -70,7 +70,7 @@ backend/
 │   │
 │   ├── services/                # Business logic (no FastAPI imports here)
 │   │   ├── auth_service.py
-│   │   ├── otp_service.py        # Fast2SMS wrapper
+│   │   ├── email_service.py      # Resend wrapper for OTP delivery
 │   │   ├── cashfree_service.py   # Payments + Payouts
 │   │   ├── escrow_service.py     # State machine
 │   │   ├── vault_service.py      # AES encrypt/decrypt

@@ -7,13 +7,13 @@ If you only want to give your backend AI ONE message instead of attaching all 16
 ```
 You are building the backend for SLOTU — an Indian subscription-slot marketplace
 with escrow payments. Stack: FastAPI + PostgreSQL + Redis + Celery + Cashfree
-Payments + Cashfree Payouts + Fast2SMS OTP + AES-256-GCM credential vault.
+Payments + Cashfree Payouts + Resend email OTP + AES-256-GCM credential vault.
 
 NON-NEGOTIABLES
 1. Every endpoint prefixed /api.
 2. Every endpoint has Pydantic v2 request + response models.
 3. All money in integer paise. No floats.
-4. All phones in +91XXXXXXXXXX (E.164).
+4. Auth uses email OTP in the current v1 product flow.
 5. Webhook signatures verified before any state change.
 6. Order + escrow_transaction creation atomic.
 7. Vault never returns plaintext outside OTP-gated reveal endpoint.
@@ -24,8 +24,8 @@ NON-NEGOTIABLES
 BUILD ORDER
 Phase 1: skeleton + Alembic + Docker compose
 Phase 2: DB migrations (13 tables)
-Phase 3: Auth — Fast2SMS OTP + JWT + role middleware
-Phase 4: Users + seller verification (UPI validate, Aadhaar OTP)
+Phase 3: Auth — Resend email OTP + JWT + role middleware
+Phase 4: Users + seller onboarding (name, seller profile, payout UPI)
 Phase 5: Listings CRUD
 Phase 6: Orders + escrow state machine (no payments yet)
 Phase 7: Cashfree Payments — create order + webhook
@@ -33,7 +33,7 @@ Phase 8: Credential vault (AES-256-GCM + OTP-gated reveal)
 Phase 9: Cashfree Payouts — release to seller
 Phase 10: Refunds + disputes
 Phase 11: Reviews + trust score
-Phase 12: Notifications (Fast2SMS SMS + SendGrid email + WebSocket)
+Phase 12: Notifications (email + WebSocket + in-app)
 Phase 13: Admin panel (/api/admin/*)
 Phase 14: Celery Beat tasks (auto_confirm, expire_pending, retry_payouts, etc.)
 Phase 15: Tests + load test + hardening
@@ -55,8 +55,7 @@ POST /api/auth/refresh
 GET  /api/auth/me
 POST /api/users/become-seller
 POST /api/users/seller/upi
-POST /api/users/seller/aadhaar/send-otp
-POST /api/users/seller/aadhaar/verify-otp
+GET  /api/users/seller/:id/public
 GET  /api/listings (filters + pagination)
 POST /api/listings
 PATCH /api/listings/:id
@@ -107,9 +106,8 @@ CELERY BEAT
 SECURITY
 - Bcrypt for OTP hash, AES-256-GCM for vault.
 - JWT HS256, access 15 min, refresh 7 days HttpOnly Secure SameSite=Lax cookie.
-- Rate limit OTP send 3/min/phone, 10/hour/phone, 30/hour/IP.
-- Phone masked in logs.
-- No raw Aadhaar stored — only one-way hash of last 4 digits + verified bool.
+- Rate limit OTP send 3/min/email, 10/hour/email, 30/hour/IP.
+- Email OTP values never stored in plaintext.
 - Webhook replay protection via timestamp window 5 min.
 
 LEGAL (must surface in code/copy)

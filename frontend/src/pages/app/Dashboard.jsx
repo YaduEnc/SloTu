@@ -48,14 +48,14 @@ export default function Dashboard() {
           />
           <ActionCard
             icon={Store}
-            title={sp ? "Seller centre" : "Become a seller"}
+            title={sp ? "Seller listings" : "Become a seller"}
             desc={
               sp
-                ? "Manage your seller profile and onboarding."
+                ? "Create and manage your draft listings."
                 : "Earn from unused slots on family or team plans."
             }
-            cta={sp ? "Open seller centre" : "Get started"}
-            to={sp ? "/seller" : "/onboarding/become-seller"}
+            cta={sp ? "Open listings" : "Get started"}
+            to={sp ? "/seller/listings" : "/onboarding/become-seller"}
             testId="action-seller"
           />
           <ActionCard

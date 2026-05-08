@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import AppShell from "../../components/app/AppShell";
 import { useAuth } from "../../lib/auth";
 import { users, asApiError } from "../../lib/api";
 import { Input } from "../../components/ui/input";
-import { CheckCircle2, Clock, Loader2, Pencil, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Loader2, Pencil, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 const STEPS = [
@@ -49,6 +49,24 @@ export default function SellerStatus() {
         </div>
 
         <UpiPanel sp={sp} reloadMe={reloadMe} />
+
+        <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.06] p-6">
+          <div className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">Next step</div>
+          <h2 className="font-display text-2xl font-semibold text-zinc-50">
+            Start building your catalogue
+          </h2>
+          <p className="mt-2 text-sm text-zinc-300 max-w-2xl">
+            Your seller account is ready for draft listings. Create your first listing now, then manage pricing, slots, and status from the seller listings page.
+          </p>
+          <Link
+            to="/seller/listings"
+            data-testid="seller-status-open-listings"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-5 py-2.5 text-sm font-semibold"
+          >
+            Open seller listings
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
 
         <div className="mt-10 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
           <div className="flex items-center gap-2 text-emerald-400 mb-2">

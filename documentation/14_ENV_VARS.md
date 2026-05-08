@@ -61,42 +61,30 @@ CASHFREE_PAYOUTS_API_VERSION=2024-01-01
 
 **Note**: Cashfree Payouts is a SEPARATE product from Payments — separate signup, separate KYC, separate billing. Apply at https://www.cashfree.com/payouts/.
 
-## SMS (Fast2SMS primary)
+## Email (Resend primary)
 
-Get from: https://www.fast2sms.com → Dev API → Auth Key
+```bash
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=
+SENDGRID_FROM_EMAIL=login@yaduraj.me
+SENDGRID_FROM_NAME=Slotu
+```
+
+## SMS (legacy / optional)
+
+SMS is no longer the primary auth path in v1. Keep these only if SMS notifications or a future SMS login path is reintroduced.
 
 ```bash
 SMS_PROVIDER=fast2sms                    # fast2sms | msg91
 FAST2SMS_API_KEY=
-FAST2SMS_SENDER_ID=SLOTUI                # 6 chars, DLT-registered
+FAST2SMS_SENDER_ID=SLOTUI
 FAST2SMS_DLT_TEMPLATE_OTP=
-FAST2SMS_DLT_TEMPLATE_ORDER_PAID=
-FAST2SMS_DLT_TEMPLATE_ORDER_RELEASED=
-FAST2SMS_DLT_TEMPLATE_ORDER_DISPUTED=
-FAST2SMS_DLT_TEMPLATE_KYC_APPROVED=
-
-# Fallback
-SMS_FALLBACK_ENABLED=true
 MSG91_AUTH_KEY=
 MSG91_SENDER_ID=SLOTUI
 MSG91_TEMPLATE_OTP=
 ```
 
-**DLT registration** is mandatory for transactional SMS in India. Register sender ID + each template at https://www.smartping.live or via Fast2SMS dashboard.
-
-## Email (SendGrid primary)
-
-```bash
-EMAIL_PROVIDER=sendgrid
-SENDGRID_API_KEY=
-SENDGRID_FROM_EMAIL=hello@slotu.in
-SENDGRID_FROM_NAME=Slotu
-
-EMAIL_FALLBACK_ENABLED=false
-RESEND_API_KEY=
-```
-
-## Aadhaar verification (KYC)
+## Aadhaar verification (legacy optional KYC)
 
 Pick one: Karza, IDfy, Sandbox, Signzy, AuthBridge.
 
@@ -106,7 +94,7 @@ KARZA_API_KEY=
 KARZA_BASE_URL=https://api.karza.in
 ```
 
-Aadhaar OTP API costs ~₹2–₹5 per verification.
+Aadhaar is not part of the primary frontend onboarding flow now.
 
 ## File storage (Cloudflare R2 — S3-compatible)
 
@@ -132,7 +120,7 @@ VAULT_KEY_VERSION=1
 
 ```bash
 RATE_LIMIT_GLOBAL=600/minute
-RATE_LIMIT_OTP_SEND_PER_PHONE=3/minute,10/hour
+RATE_LIMIT_OTP_SEND_PER_EMAIL=3/minute,10/hour
 RATE_LIMIT_OTP_SEND_PER_IP=30/hour
 RATE_LIMIT_VAULT_REVEAL=3/15minutes
 ```
@@ -150,7 +138,7 @@ FLOWER_PASS=                              # required in production
 ## Misc
 
 ```bash
-ADMIN_BOOTSTRAP_PHONE=+91XXXXXXXXXX      # used by create_admin script
+ADMIN_BOOTSTRAP_EMAIL=admin@example.com
 DEFAULT_FEE_PERCENT=6.0
 PRO_FEE_PERCENT=4.0
 ORDER_PENDING_EXPIRY_MINUTES=30

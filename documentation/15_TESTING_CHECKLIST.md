@@ -129,14 +129,13 @@
 
 ### Security
 
-- [ ] Phone masked in logs
 - [ ] No vault data in logs ever
 - [ ] CORS rejects unallowed origins
 - [ ] HSTS header present in production
 - [ ] CSRF: refresh cookie SameSite=Lax (no need for token because stateless JWT for mutating endpoints)
 - [ ] SQL injection: parameterised queries verified
 - [ ] File upload type/size enforced
-- [ ] Aadhaar number never persisted (test by reading DB after KYC verify)
+- [ ] If optional Aadhaar KYC is used, Aadhaar number never persisted (test by reading DB after KYC verify)
 
 ## Load test targets
 
@@ -155,7 +154,7 @@ set -e
 BASE=$1
 curl -sf $BASE/api/health | grep '"status":"ok"'
 curl -sf -X POST $BASE/api/auth/otp/send -H "Content-Type: application/json" \
-  -d '{"phone":"+919999999999"}' | grep request_id
+  -d '{"email":"smoke@example.com"}' | grep request_id
 echo "Smoke ok"
 ```
 
