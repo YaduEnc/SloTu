@@ -25,6 +25,8 @@ This folder contains everything a backend AI (or human engineer) needs to build 
 | 13 | `13_SECURITY_LEGAL.md` | Rate limits, IT Act 2000 §79 compliance, ToS framing |
 | 14 | `14_ENV_VARS.md` | Every env variable required, where to get it |
 | 15 | `15_TESTING_CHECKLIST.md` | Acceptance tests per feature |
+| ★ | `frontend-types.ts` | TypeScript types — single source of truth for every endpoint shape |
+| ★ | `QUICK_PROMPT.md` | One-message version (paste & go) |
 
 ## TL;DR for your backend AI
 
