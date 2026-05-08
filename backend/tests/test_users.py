@@ -84,7 +84,7 @@ def test_become_seller_creates_profile_and_updates_auth_me(client, monkeypatch):
     assert me_response.json()["seller_profile"]["user_id"] == body["seller_profile"]["user_id"]
 
 
-def test_seller_upi_endpoint_marks_upi_verified(client, monkeypatch):
+def test_seller_upi_endpoint_saves_format_valid_upi_and_marks_kyc_submitted(client, monkeypatch):
     login = login_user(client, monkeypatch, phone="9876543210")
     client.post("/api/users/become-seller", headers={"Authorization": f"Bearer {login['access_token']}"})
 
@@ -95,7 +95,25 @@ def test_seller_upi_endpoint_marks_upi_verified(client, monkeypatch):
     )
 
     assert response.status_code == 200
-    assert response.json() == {"upi_id": "aman@okhdfcbank", "upi_verified": True}
+    assert response.json() == {
+        "upi_id": "aman@okhdfcbank",
+        "upi_verified": False,
+        "verification_status": "FORMAT_VALID",
+    }
+
+
+def test_seller_upi_rejects_invalid_format(client, monkeypatch):
+    login = login_user(client, monkeypatch, phone="9876543210")
+    client.post("/api/users/become-seller", headers={"Authorization": f"Bearer {login['access_token']}"})
+
+    response = client.post(
+        "/api/users/seller/upi",
+        json={"upi_id": "not-a-vpa"},
+        headers={"Authorization": f"Bearer {login['access_token']}"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_UPI_ID"
 
 
 def test_aadhaar_send_and_verify_marks_kyc_approved(client, monkeypatch, session_factory):

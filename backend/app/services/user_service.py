@@ -73,16 +73,17 @@ async def set_seller_upi(db: AsyncSession, user: User, upi_id: str) -> UpiSetRes
         raise AppError(422, "INVALID_UPI_ID", "UPI ID must be valid", {"field": "upi_id"})
 
     seller_profile = await _get_seller_profile(db, user)
-    if settings.app_env != "development" and not (
-        settings.cashfree_payouts_client_id and settings.cashfree_payouts_client_secret
-    ):
-        raise AppError(503, "UPI_PROVIDER_UNAVAILABLE", "UPI verification provider unavailable")
-
     seller_profile.upi_id = upi_id
-    seller_profile.upi_verified = True
+    seller_profile.upi_verified = False
+    if seller_profile.kyc_status == "pending":
+        seller_profile.kyc_status = "submitted"
     await db.commit()
     await db.refresh(seller_profile)
-    return UpiSetResponse(upi_id=seller_profile.upi_id or upi_id, upi_verified=seller_profile.upi_verified)
+    return UpiSetResponse(
+        upi_id=seller_profile.upi_id or upi_id,
+        upi_verified=seller_profile.upi_verified,
+        verification_status="FORMAT_VALID",
+    )
 
 
 async def send_aadhaar_otp(db: AsyncSession, user: User, aadhaar: str) -> AadhaarSendOtpResponse:

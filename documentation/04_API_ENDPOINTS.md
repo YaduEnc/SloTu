@@ -89,18 +89,23 @@ Request:
 
 ### `POST /api/users/seller/upi`
 Request: `{ "upi_id": "aman@okhdfcbank" }`
-- Validates UPI via Cashfree Payouts beneficiary verify or VPA-validate API.
-- Sets `upi_verified=true` on success.
-- Response 200: `{ "upi_id": "...", "upi_verified": true }`
+- Temporary v1 capture flow.
+- Validates only the UPI ID format.
+- Saves the UPI ID to the seller profile.
+- Leaves `upi_verified=false`.
+- Moves `kyc_status` from `pending` to `submitted` if no stronger verification has been completed yet.
+- Response 200 includes a lightweight status summary.
 
 ### `POST /api/users/seller/aadhaar/send-otp`
 Request: `{ "aadhaar": "123456789012" }`
+- Optional flow in current v1 direction.
 - Calls KYC provider (Karza / Sandbox / IDfy). Provider issues OTP to Aadhaar-linked mobile.
 - DO NOT store Aadhaar number. Store only one-way hash of last 4 digits.
 - Response 200: `{ "kyc_request_id": "..." }`
 
 ### `POST /api/users/seller/aadhaar/verify-otp`
 Request: `{ "kyc_request_id": "...", "otp": "123456" }`
+- Optional flow in current v1 direction.
 - On success: `aadhaar_verified=true`, `kyc_status=approved`.
 - Response 200: full seller_profile.
 

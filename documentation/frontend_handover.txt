@@ -1,0 +1,405 @@
+SLOTU FRONTEND HANDOVER
+Last updated: 2026-05-08
+
+Audience
+- Frontend engineers joining API integration and page-building work
+
+Purpose
+- This file is the frontend team handover from backend.
+- It explains what backend features are already usable, what pages can be built now, how auth works, what seller onboarding flow should be implemented, and which areas are still placeholder / not production-complete yet.
+
+======================================================================
+1. HIGH-LEVEL STATUS
+======================================================================
+
+Backend status right now
+- FastAPI backend is running in Docker locally
+- PostgreSQL schema is implemented
+- Auth is implemented
+- User profile update is implemented
+- Seller onboarding is implemented
+- UPI capture with format validation is implemented
+- Aadhaar flow still exists but is now optional in current v1 direction
+
+Current tested result
+- docker compose exec -T api pytest tests -q
+- Result: 12 passed
+
+Frontend implication
+- You can begin building and integrating:
+  - auth screens
+  - profile screen
+  - seller onboarding screens
+  - authenticated app shell
+- Do not start real listings/orders/payment UI integration yet as the backend for those is not complete.
+
+======================================================================
+2. BACKEND-READY USER FLOWS
+======================================================================
+
+These flows are ready for frontend integration now.
+
+Flow A: Phone login
+1. User enters mobile number
+2. Frontend calls POST /api/auth/otp/send
+3. User enters OTP
+4. Frontend calls POST /api/auth/otp/verify
+5. Backend returns access_token and user object
+6. Backend also sets refresh cookie automatically
+7. Frontend stores access_token in memory, not localStorage if possible
+
+Flow B: Session restore
+1. Frontend gets 401 on a protected call
+2. Frontend calls POST /api/auth/refresh
+3. If successful, backend returns a new access_token
+4. Retry original request
+5. If refresh fails, send user back to login
+
+Flow C: Profile completion
+1. Logged-in user opens profile page
+2. Frontend calls GET /api/auth/me
+3. User updates name/email
+4. Frontend calls PATCH /api/users/me
+
+Flow D: Become seller
+1. Logged-in user clicks become seller
+2. Frontend calls POST /api/users/become-seller
+3. Backend creates seller profile and role becomes seller
+4. seller_profile comes back in response
+
+Flow E: Seller UPI capture
+2. User enters UPI ID
+3. Frontend calls POST /api/users/seller/upi
+4. Backend checks only the UPI format for now
+5. Backend saves the UPI ID on the seller profile
+6. UI should show this as saved / submitted, not verified
+
+Flow F: Optional Aadhaar path
+1. User enters Aadhaar number
+2. Frontend calls POST /api/users/seller/aadhaar/send-otp
+3. User enters Aadhaar OTP
+4. Frontend calls POST /api/users/seller/aadhaar/verify-otp
+5. This is optional in current v1 direction
+
+======================================================================
+3. PAGES FRONTEND TEAM CAN BUILD NOW
+======================================================================
+
+Recommended immediate page list
+
+1. Login page
+- mobile number input
+- send OTP CTA
+- OTP verify step
+- resend and error handling
+
+2. Session bootstrap layer
+- app bootstrap checks if user is already logged in via auth/me
+- on 401, try refresh
+- if refresh fails, redirect to login
+
+3. Account / Profile page
+- show phone
+- editable name
+- editable email
+- save action via PATCH /api/users/me
+
+4. Become Seller page
+- explain seller flow
+- button to become seller
+- after success redirect into seller verification flow
+
+5. Seller UPI Verification page
+- explain that this currently saves the payout UPI ID and checks only its format
+- UPI input
+- submit UPI
+- show returned:
+  - verification status
+  - current saved UPI ID
+  - seller profile kyc_status from auth/me
+
+6. Seller Verification Status page
+- show current seller_profile from auth/me
+- render:
+  - kyc_status
+  - upi_verified
+  - aadhaar_verified
+  - trust_score
+  - member_since
+
+7. App shell / dashboard placeholder
+- role-aware navigation
+- placeholder cards for listings/orders once backend is ready
+
+Recommended landing page changes later
+- CTA wiring from landing page into login or seller onboarding
+- seller funnel should point to:
+  - login
+  - set profile name
+  - become seller
+  - verify UPI
+
+======================================================================
+4. API ENDPOINTS READY FOR FRONTEND
+======================================================================
+
+Auth
+- POST /api/auth/otp/send
+- POST /api/auth/otp/verify
+- POST /api/auth/refresh
+- POST /api/auth/logout
+- GET /api/auth/me
+
+Users
+- PATCH /api/users/me
+- POST /api/users/become-seller
+- POST /api/users/seller/upi
+- POST /api/users/seller/aadhaar/send-otp
+- POST /api/users/seller/aadhaar/verify-otp
+
+Source of truth docs
+- documentation/04_API_ENDPOINTS.md
+- documentation/frontend-types.ts
+- documentation/progress.txt
+
+======================================================================
+5. AUTH INTEGRATION RULES
+======================================================================
+
+Access token
+- Returned by POST /api/auth/otp/verify
+- Returned by POST /api/auth/refresh
+- Send on protected requests as:
+  - Authorization: Bearer <token>
+
+Refresh token
+- Stored by backend in HttpOnly cookie
+- Frontend must not try to read it
+- Browser sends it automatically to backend
+
+Frontend storage recommendation
+- Keep access token in memory
+- If app reloads, call GET /api/auth/me or POST /api/auth/refresh to restore
+
+Logout
+- Call POST /api/auth/logout
+- Then clear frontend in-memory auth state
+
+401 behavior
+- Try refresh once
+- Retry original request once
+- If still failing, send user to login
+
+======================================================================
+6. REQUEST / RESPONSE SHAPES FRONTEND MUST EXPECT
+======================================================================
+
+POST /api/auth/otp/send
+Request
+- { "phone": "+919876543210" } or plain Indian 10-digit number, backend normalizes
+
+Response
+- { "request_id": "uuid", "expires_in": 300 }
+
+POST /api/auth/otp/verify
+Request
+- { "request_id": "uuid", "phone": "9876543210", "otp": "123456" }
+
+Response
+- {
+    "access_token": "...",
+    "token_type": "Bearer",
+    "expires_in": 900,
+    "user": { ... },
+    "is_new_user": true|false
+  }
+
+GET /api/auth/me
+Response
+- user object
+- includes seller_profile when user is seller / has one
+
+PATCH /api/users/me
+Request
+- { "name": "Aman Kumar", "email": "aman@example.com" }
+
+Response
+- updated user object
+
+POST /api/users/become-seller
+Response
+- { "seller_profile": { ... } }
+
+POST /api/users/seller/upi
+Request
+- { "upi_id": "aman@okhdfcbank" }
+
+Response
+- {
+    "upi_id": "aman@okhdfcbank",
+    "upi_verified": false,
+    "verification_status": "FORMAT_VALID"
+  }
+
+POST /api/users/seller/aadhaar/send-otp
+Response
+- { "kyc_request_id": "uuid" }
+
+POST /api/users/seller/aadhaar/verify-otp
+Response
+- seller_profile object
+
+======================================================================
+7. ERROR HANDLING CONTRACT
+======================================================================
+
+All errors use
+- { "error": { "code": "STRING_CODE", "message": "Human readable", "details": {} } }
+
+Important error codes frontend should handle explicitly
+
+Auth
+- INVALID_PHONE
+- RATE_LIMITED
+- OTP_INVALID
+- OTP_EXPIRED
+- OTP_TOO_MANY_ATTEMPTS
+- UNAUTHENTICATED
+
+Profile
+- EMAIL_TAKEN
+
+Seller onboarding
+- SELLER_PROFILE_REQUIRED
+- INVALID_UPI_ID
+- KYC_OTP_EXPIRED
+- KYC_OTP_INVALID
+- KYC_REQUEST_FORBIDDEN
+
+Validation
+- INVALID_REQUEST
+
+Frontend behavior recommendation
+- map `code` to user-friendly UI messages
+- keep raw `message` for fallback display
+
+======================================================================
+8. PAGE STATE RULES
+======================================================================
+
+Recommended page gating
+
+Guest
+- landing
+- login / otp flow
+
+Logged in, no seller profile
+- profile completion
+- become seller page
+
+Seller profile exists, UPI not verified
+- seller verification page
+- dashboard should remain limited
+
+Future state after live provider verification is added
+- seller dashboard can unlock more capabilities when `upi_verified` becomes true
+
+======================================================================
+9. WHAT IS BACKEND-ONLY AND MUST NEVER BE IN FRONTEND
+======================================================================
+
+Current seller UPI flow
+- Frontend only calls our backend endpoint:
+  - POST /api/users/seller/upi
+- Frontend must not call any bank, UPI, Cashfree, or Decentro endpoint directly.
+- When a real verification provider is added later, those credentials will remain backend-only.
+
+Other backend-only secrets
+- JWT secret
+- SMS provider keys
+- email provider keys
+- payouts keys
+- webhook secrets
+
+======================================================================
+10. IMPORTANT PRODUCT / UX GUIDANCE
+======================================================================
+
+What frontend should call the current seller verification
+- Use labels like:
+  - UPI submitted
+  - Payout UPI saved
+  - Verification pending
+
+What frontend should NOT claim right now
+- UPI verified
+- bank verified
+- payout account verified
+- Aadhaar verified, unless Aadhaar optional flow was actually completed
+- Government ID verified
+- Full legal KYC completed
+
+Good seller UX copy
+- "Add your payout UPI ID"
+- "We currently validate the format and save your payout handle"
+- "Full bank-side verification will be added in a later release"
+
+======================================================================
+11. WHAT IS STILL NOT READY FOR FRONTEND INTEGRATION
+======================================================================
+
+Not ready yet
+- listings CRUD UI
+- search / browse marketplace UI against real API
+- orders UI
+- payments UI
+- disputes UI
+- reviews UI
+- notifications UI
+- payouts history UI
+
+Frontend can design these pages now, but should not wire real production integration yet.
+
+======================================================================
+12. RECOMMENDED FRONTEND IMPLEMENTATION ORDER
+======================================================================
+
+1. Build auth flow
+- login page
+- otp verify step
+- refresh/session restore
+
+2. Build authenticated shell
+- user state provider
+- route guards
+
+3. Build profile page
+- update name/email
+
+4. Build seller onboarding flow
+- become seller
+- verify UPI
+- verification status page
+
+5. Build dashboard placeholders
+- listings/orders cards marked "coming next" until APIs are ready
+
+======================================================================
+13. BACKEND TEAM NOTES TO FRONTEND TEAM
+======================================================================
+
+Current safest integration assumption
+- The backend contract should be treated as the source of truth over any old landing-page-only assumptions.
+
+Best files to read before implementing
+- documentation/frontend-types.ts
+- documentation/04_API_ENDPOINTS.md
+- documentation/progress.txt
+- backend/app/schemas/user.py
+- backend/app/schemas/auth.py
+
+If frontend sees mismatches
+- Prefer backend response shape over old mock shape
+- Raise mismatch quickly so contract docs can be corrected
+
+End of handover

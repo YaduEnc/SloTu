@@ -225,9 +225,10 @@ export interface UpiSetRequest { upi_id: string; }
 export interface UpiSetResponse {
   upi_id: string;
   upi_verified: boolean;
+  verification_status: string;
 }
 
-export interface AadhaarSendOtpRequest { aadhaar: string; }   // 12 digits, NEVER stored
+export interface AadhaarSendOtpRequest { aadhaar: string; }   // optional flow, 12 digits, NEVER stored
 export interface AadhaarSendOtpResponse { kyc_request_id: UUID; }
 
 export interface AadhaarVerifyOtpRequest {

@@ -56,7 +56,6 @@ class Settings(BaseSettings):
         default="2024-01-01",
         alias="CASHFREE_PAYOUTS_API_VERSION",
     )
-
     sms_provider: str = Field(default="fast2sms", alias="SMS_PROVIDER")
     fast2sms_api_key: str = Field(default="", alias="FAST2SMS_API_KEY")
     fast2sms_sender_id: str = Field(default="SLOTUI", alias="FAST2SMS_SENDER_ID")

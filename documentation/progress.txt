@@ -32,7 +32,7 @@ Verified local commands
 - docker compose exec -T api pytest tests -q
 
 Current automated result
-- Backend test suite result: 11 passed
+- Backend test suite result: 12 passed
 
 ======================================================================
 2. PROJECT STRUCTURE THAT NOW MATTERS
@@ -237,8 +237,14 @@ Behavior
 - Auth required
 - Requires existing seller profile
 - Validates UPI ID format
-- In development mode, marks UPI as verified immediately
-- Stores upi_id and upi_verified on seller_profiles
+- Saves the UPI ID as the seller payout identifier
+- Marks upi_verified=false
+- Moves kyc_status from pending to submitted
+- Returns verification_status=FORMAT_VALID to make it explicit that only syntax has been checked
+
+Why UPI is primary now
+- It is the first payout identifier we collect during onboarding
+- It gives frontend and seller flows a stable field to work with while live bank-side verification is deferred
 
 POST /api/users/seller/aadhaar/send-otp
 Behavior
@@ -268,6 +274,7 @@ Behavior
 Important note
 - Aadhaar number itself is NOT stored in the database.
 - Only the one-way hash of the last 4 digits is stored after successful verification.
+- Aadhaar is no longer the primary onboarding requirement in the current backend direction.
 
 ======================================================================
 7. SHARED AUTH DEPENDENCY: IMPLEMENTED
@@ -339,7 +346,8 @@ Fully functional in local backend
 - Current-user endpoint
 - User profile update
 - Seller profile creation
-- Development-mode UPI verification flow
+- Real Cashfree UPI verification integration point
+- Development-mode UPI verification fallback when live verification credentials are absent
 - Development-mode Aadhaar OTP flow
 - End-to-end automated tests for all above items
 
@@ -348,14 +356,15 @@ Fully functional in local backend
 ======================================================================
 
 UPI verification
-- Current local behavior is development-safe.
-- In development mode, a valid-format UPI ID is marked verified without calling a live verification provider.
-- This keeps the flow testable while the real provider integration is still pending.
+- Current behavior only checks UPI format and stores the seller's UPI ID.
+- This is not bank-side or provider-side verification.
+- `upi_verified` intentionally remains false until a real verification provider is integrated.
 
 Aadhaar KYC
 - Current local behavior uses a Redis-backed temporary OTP request.
 - This simulates the send/verify flow.
 - Real external provider calls are not wired yet.
+- Aadhaar is optional in the current v1 verification strategy.
 
 SMS sending
 - Local development falls back to non-live OTP behavior when Fast2SMS credentials are absent.
@@ -365,8 +374,8 @@ SMS sending
 ======================================================================
 
 Still pending
-- Real Cashfree/verification-provider UPI validation
-- Real Aadhaar/KYC provider integration
+- Live UPI verification provider integration
+- Real Aadhaar/KYC provider integration if Aadhaar remains part of the product
 - Public seller profile endpoint
 - Listings API
 - Orders API
@@ -382,11 +391,11 @@ Still pending
 ======================================================================
 
 Recommended next sequence
-1. Replace dev UPI verification with real provider validation
-2. Replace Redis Aadhaar stub with real KYC provider flow
-3. Add public seller profile endpoint
-4. Add seller listing creation and management
-5. Add order creation and payment session flow
+1. Add public seller profile endpoint
+2. Add seller listing creation and management
+3. Add order creation and payment session flow
+4. Decide whether Aadhaar remains optional or is removed from v1 onboarding entirely
+5. Integrate a live UPI verification provider when onboarding/compliance requirements harden
 
 ======================================================================
 13. QUICK LOCAL CHECKLIST

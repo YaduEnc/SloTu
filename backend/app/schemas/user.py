@@ -71,6 +71,7 @@ class UpiSetRequest(BaseModel):
 class UpiSetResponse(BaseModel):
     upi_id: str
     upi_verified: bool
+    verification_status: str
 
 
 class AadhaarSendOtpRequest(BaseModel):
