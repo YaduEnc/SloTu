@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Lock, Zap, BadgeCheck, Shield, Fingerprint, Scale } from "lucide-react";
 import { SiNetflix, SiSpotify, SiCanva, SiNotion, SiYoutube } from "react-icons/si";
@@ -155,21 +156,21 @@ export default function Hero() {
             transition={{ duration: 0.7, delay: 0.45 }}
             className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4"
           >
-            <a
-              href="#waitlist"
+            <Link
+              to="/login"
               data-testid="hero-cta-browse"
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-6 py-3.5 text-base font-semibold transition-all hover:translate-y-[-1px] animate-pulse-glow"
             >
               Browse slots
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </a>
-            <a
-              href="#sellers"
+            </Link>
+            <Link
+              to="/login"
               data-testid="hero-cta-sell"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 hover:border-zinc-700 text-zinc-100 px-6 py-3.5 text-base font-semibold transition-all backdrop-blur-sm"
             >
               Sell a slot
-            </a>
+            </Link>
           </motion.div>
 
           <motion.div

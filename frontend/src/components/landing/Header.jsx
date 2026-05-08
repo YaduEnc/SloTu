@@ -95,22 +95,20 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <a
-              href={onLanding ? "#waitlist" : "/#waitlist"}
-              onClick={onLanding ? goSection("waitlist") : undefined}
-              data-testid="header-cta-waitlist"
+            <Link
+              to="/login"
+              data-testid="header-login"
               className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-zinc-300 hover:text-zinc-50 transition-colors"
             >
-              Join waitlist
-            </a>
-            <a
-              href={onLanding ? "#waitlist" : "/#waitlist"}
-              onClick={onLanding ? goSection("waitlist") : undefined}
+              Sign in
+            </Link>
+            <Link
+              to="/login"
               data-testid="header-cta-primary"
               className="hidden md:inline-flex items-center justify-center rounded-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-semibold transition-colors"
             >
               Get early access
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
@@ -145,14 +143,14 @@ export default function Header() {
                 {n.label}
               </a>
             ))}
-            <a
-              href={onLanding ? "#waitlist" : "/#waitlist"}
-              onClick={onLanding ? goSection("waitlist") : () => setMenuOpen(false)}
+            <Link
+              to="/login"
+              onClick={() => setMenuOpen(false)}
               className="mt-4 px-4 py-3 rounded-full text-center bg-emerald-500 text-emerald-950 font-semibold"
               data-testid="mobile-cta"
             >
-              Get early access
-            </a>
+              Sign in / Get early access
+            </Link>
           </nav>
         </div>
       </div>
