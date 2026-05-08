@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   SiNetflix, SiSpotify, SiApplemusic, SiYoutube, SiCanva, SiFigma,
   SiFramer, SiNotion, SiDropbox, SiPerplexity, SiGooglegemini, SiCoursera,
@@ -6,13 +6,12 @@ import {
   SiOpenai, SiJio, SiClaude
 } from "react-icons/si";
 
-// Hybrid catalogue: real icons where available, custom letter logos otherwise
 const row1 = [
   { type: "icon", Icon: SiNetflix, name: "Netflix", color: "#E50914" },
   { type: "letter", letter: "P", name: "Prime Video", color: "#00A8E1" },
   { type: "icon", Icon: SiJio, name: "JioCinema", color: "#E60022" },
   { type: "letter", letter: "H", name: "Hotstar", color: "#1F80E0" },
-  { type: "icon", Icon: SiSony, name: "SonyLIV", color: "#1A1A1A" },
+  { type: "icon", Icon: SiSony, name: "SonyLIV", color: "#FFFFFF" },
   { type: "icon", Icon: SiSpotify, name: "Spotify", color: "#1DB954" },
   { type: "icon", Icon: SiApplemusic, name: "Apple Music", color: "#FA243C" },
   { type: "icon", Icon: SiYoutube, name: "YouTube Premium", color: "#FF0000" },
@@ -40,37 +39,64 @@ const row2 = [
 
 const Pill = ({ item }) => {
   const { name, color } = item;
+  const [hover, setHover] = useState(false);
   return (
-    <div className="group flex items-center gap-3 px-5 py-3 rounded-full border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm whitespace-nowrap mx-2 hover:border-zinc-700 hover:bg-zinc-900 transition-colors">
-      <div className="h-7 w-7 rounded-md bg-zinc-950 border border-zinc-800 flex items-center justify-center flex-shrink-0">
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="group flex items-center gap-3 px-5 py-3 rounded-full border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm whitespace-nowrap mx-2 hover:bg-zinc-900 transition-all duration-300"
+      style={{
+        borderColor: hover ? `${color}55` : undefined,
+        boxShadow: hover ? `0 0 24px ${color}25` : undefined,
+      }}
+    >
+      <div
+        className="h-7 w-7 rounded-md bg-zinc-950 border border-zinc-800 flex items-center justify-center flex-shrink-0 transition-colors"
+        style={{ borderColor: hover ? `${color}80` : undefined }}
+      >
         {item.type === "icon" ? (
           <item.Icon
-            className="text-base transition-colors"
-            style={{ color }}
+            className="text-base transition-all duration-300"
+            style={{ color: hover ? color : "#71717a" }}
           />
         ) : (
           <span
-            className="text-[11px] font-display font-bold tracking-tight"
-            style={{ color }}
+            className="text-[11px] font-display font-bold tracking-tight transition-colors"
+            style={{ color: hover ? color : "#71717a" }}
           >
             {item.letter}
           </span>
         )}
       </div>
-      <span className="text-sm font-medium text-zinc-300">{name}</span>
+      <span
+        className="text-sm font-medium transition-colors"
+        style={{ color: hover ? "#fafafa" : "#d4d4d8" }}
+      >
+        {name}
+      </span>
     </div>
   );
 };
 
-const Marquee = ({ items, reverse = false }) => (
-  <div className="relative overflow-hidden">
-    <div className={`flex w-max ${reverse ? "animate-marquee-reverse" : "animate-marquee"}`}>
-      {[...items, ...items].map((item, i) => (
-        <Pill key={`${item.name}-${i}`} item={item} />
-      ))}
+const Marquee = ({ items, reverse = false }) => {
+  const [paused, setPaused] = useState(false);
+  return (
+    <div
+      className="relative overflow-hidden"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div
+        className={`flex w-max ${reverse ? "animate-marquee-reverse" : "animate-marquee"}`}
+        style={{ animationPlayState: paused ? "paused" : "running" }}
+      >
+        {[...items, ...items].map((item, i) => (
+          <Pill key={`${item.name}-${i}`} item={item} />
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function ServicesGrid() {
   return (
@@ -93,7 +119,7 @@ export default function ServicesGrid() {
           </div>
           <div className="lg:col-span-5 lg:text-right">
             <p className="text-zinc-400 text-base lg:text-lg max-w-md lg:ml-auto">
-              From streaming and music to AI tools and design suites — Slotu only lists services where family or team sharing is allowed by ToS.
+              From streaming and music to AI tools and design suites — Slotu only lists services where family or team sharing is allowed by ToS. Hover any pill to highlight.
             </p>
           </div>
         </div>
