@@ -1,0 +1,143 @@
+{
+  "project_name": "SLOTU",
+  "app_type": "marketing_site",
+  "theme": "dark",
+  "archetype": "Archetype 4: Swiss & High-Contrast (Dark Mode variant)",
+  "typography": {
+    "google_fonts_import": "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap');",
+    "heading_font": "'Outfit', sans-serif",
+    "body_font": "'Manrope', sans-serif",
+    "mono_font": "'JetBrains Mono', monospace",
+    "hierarchy": {
+      "h1": "text-5xl md:text-6xl+ lg:text-7xl font-bold tracking-tighter",
+      "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
+      "h3": "text-xl md:text-2xl font-medium tracking-tight",
+      "body": "text-base md:text-lg leading-relaxed",
+      "overline": "text-xs font-bold uppercase tracking-[0.2em]"
+    },
+    "rules": [
+      "Headings must use tracking-tighter for a modern, sleek look.",
+      "Overlines must be uppercase, tracking-[0.2em], text-xs.",
+      "DO NOT use Inter or Roboto for headings."
+    ]
+  },
+  "colors": {
+    "palette": {
+      "background": "#09090b",
+      "surface": "#18181b",
+      "surface_elevated": "#27272a",
+      "primary": "#10b981",
+      "primary_foreground": "#022c22",
+      "text_primary": "#fafafa",
+      "text_secondary": "#a1a1aa",
+      "border": "#27272a"
+    },
+    "tailwind_classes": {
+      "bg_base": "bg-zinc-950",
+      "bg_surface": "bg-zinc-900",
+      "bg_surface_elevated": "bg-zinc-800",
+      "text_main": "text-zinc-50",
+      "text_muted": "text-zinc-400",
+      "border_color": "border-zinc-800",
+      "accent_primary": "bg-emerald-500 text-emerald-950",
+      "accent_glow": "shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+    },
+    "rules": [
+      "Use zinc-950 instead of pure black for subtle warmth.",
+      "Primary CTA should be Emerald to signify money, growth, and trust.",
+      "Surface borders should be 1px solid border-zinc-800.",
+      "High contrast text visibility is mandatory."
+    ]
+  },
+  "layout_and_spacing": {
+    "spacing_system": "Generous spacing. p-8, p-12, p-24, gap-8",
+    "grid_system": "Bento Grid (Tetris Mode) for Features, Control Room for Calculator",
+    "rules": [
+      "Asymmetrical layouts for marketing sections.",
+      "Containers with borders must have internal padding (e.g., p-8).",
+      "Never center everything by default. Use left alignment for body and dense content."
+    ]
+  },
+  "components_strategy": {
+    "buttons": "Shadcn based. Primary buttons are solid emerald with dark text. Secondary are outline with subtle hover. Apply data-testid.",
+    "cards": "1px border-zinc-800, bg-zinc-900. Flat, rectangular, max rounded-2xl.",
+    "inputs": "Shadcn inputs. bg-zinc-950 border-zinc-800 focus:border-emerald-500.",
+    "navigation": "Sticky glassmorphism header (backdrop-blur-xl bg-zinc-950/70) with 1px border-b border-white/5.",
+    "calculator": "Use Shadcn Sliders for interactive slots/price/days adjustment. Monospace font for numerical outputs.",
+    "tabs": "Use Shadcn Tabs for the Waitlist Buyer/Seller toggle."
+  },
+  "visual_enhancers": {
+    "textures": "Use CSS radial-gradient or grain image overlay for the background to kill digital flatness.",
+    "glassmorphism": "Used for header and sticky CTAs. High blur (backdrop-blur-xl) with subtle 1px border.",
+    "icons": "Use 'lucide-react' for standard UI icons.",
+    "logos": "Use 'react-icons/si' for brand logos in the Services grid (e.g., SiNetflix, SiSpotify, SiCanva)."
+  },
+  "sections": [
+    {
+      "name": "Hero",
+      "intent": "High impact, build instant trust. Dual CTAs.",
+      "layout": "Left-aligned dominant heading (Outfit font) + right-aligned abstract composition or bento-style floating cards representing subscriptions.",
+      "content": "Headline: 'Share Subscriptions. Zero Scams.', Subheadline: 'SLOTU is India’s trusted escrow marketplace for sharing digital slots safely.', CTAs: 'Browse Slots', 'Sell a Slot'."
+    },
+    {
+      "name": "How it Works",
+      "intent": "Explain the 4-step escrow process clearly.",
+      "layout": "Bento Grid (Tetris Mode) or staggered horizontal timeline (Browse -> Pay -> Receive -> Done). Use subtle borders and icons."
+    },
+    {
+      "name": "Services Grid",
+      "intent": "Showcase the massive scale of supported platforms.",
+      "layout": "Infinite Marquee (using react-fast-marquee or CSS animation) with oversized Si Icons from react-icons/si. Muted zinc-600 icons that light up on hover."
+    },
+    {
+      "name": "Trust & Escrow",
+      "intent": "Explain the escrow feature (Protected under IT Act 2000 Section 79).",
+      "layout": "Split section. Left: Trust Padlock image with green glow. Right: Accordion or stacked list of trust features (Verified Sellers, Instant Delivery, Escrow Hold)."
+    },
+    {
+      "name": "For Sellers / Calculator",
+      "intent": "Convince users to monetize unused slots. Earnings calculator.",
+      "layout": "Bento Grid. Left: Interactive calculator (Sliders for Slots, Price, Days) showing Total Earnings in massive text. Right: Seller profile image with success metric overlay."
+    },
+    {
+      "name": "Pricing Transparency",
+      "intent": "Clear commission breakdown.",
+      "layout": "2-column pricing cards. 'Standard' (5-8% commission) vs 'Pro' (₹199/mo). High contrast, crisp borders."
+    },
+    {
+      "name": "Waitlist Form",
+      "intent": "Capture leads before launch.",
+      "layout": "Centered form inside a subtle glassmorphic card. Includes Buyer/Seller toggle, Name, Email, and large Emerald CTA button."
+    },
+    {
+      "name": "Footer",
+      "intent": "Legal requirements and SEO.",
+      "layout": "Multi-column standard footer. Dark zinc-950 background. Large 'SLOTU' text watermark. Links to ToS, Privacy, Grievance Officer."
+    }
+  ],
+  "media": {
+    "images": {
+      "trust_padlock": {
+        "url": "https://images.unsplash.com/photo-1696013910376-c56f76dd8178?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwyfHxkaWdpdGFsJTIwcGFkbG9jayUyMGdsb3dpbmclMjBkYXJrfGVufDB8fHx8MTc3ODIwNTA3OXww&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract dark glowing padlock for the Trust/Escrow section.",
+        "usage": "Place in the Trust & Escrow section, ideally with a subtle mix-blend mode or dark gradient overlay."
+      },
+      "seller_profile": {
+        "url": "https://images.unsplash.com/photo-1664609298136-c17b1c443df7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBnZW4lMjB6JTIwc21hcnRwaG9uZSUyMGRhcmslMjBjaW5lbWF0aWN8ZW58MHx8fHwxNzc4MjA1MDU0fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Young Indian Gen Z man in cinematic dark lighting, representing a successful seller.",
+        "usage": "Place next to the Earnings Calculator in the 'For Sellers' section."
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "You are building the UI strictly in dark mode. Do not implement a light/dark toggle. Hardcode the dark theme visually using tailwind `zinc-950` backgrounds and `zinc-50` text.",
+    "Add `@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap');` to your CSS.",
+    "Configure Tailwind font family: sans -> 'Manrope', display -> 'Outfit'.",
+    "Install dependencies: `yarn add lucide-react react-icons framer-motion`.",
+    "Use standard HTML structure combined with Tailwind classes. Do NOT abstract structural layout elements (like Hero, Section) into Shadcn cards.",
+    "Shadcn is ONLY for interactive elements: Button, Input, Slider (for Calculator), Tabs (for Waitlist toggle).",
+    "CRITICAL: Apply `data-testid` to ALL interactive elements (buttons, inputs, sliders, toggles).",
+    "Ensure the Earnings Calculator in the Sellers section has state (React useState) for 'slots', 'price', and 'days', and dynamically updates the 'Total Earnings' text.",
+    "For the Services Grid, implement an infinite scrolling marquee using CSS or framer-motion, displaying `react-icons/si` (e.g., `<SiNetflix />`, `<SiSpotify />`, `<SiCanva />`, `<SiPlaystation />`)."
+  ]
+}
