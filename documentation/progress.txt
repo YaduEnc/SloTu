@@ -145,7 +145,7 @@ Owning files
 - backend/app/deps.py
 
 How OTP send works
-1. Client calls POST /api/auth/otp/send with a phone number.
+1. Client calls POST /api/auth/otp/send with an email address.
 2. Phone number is normalized into +91XXXXXXXXXX format.
 3. Rate limits are checked using otp_requests history.
 4. A 6-digit OTP is generated.
@@ -154,7 +154,7 @@ How OTP send works
 7. The API returns request_id and expires_in.
 
 How OTP verify works
-1. Client calls POST /api/auth/otp/verify with request_id, phone, and otp.
+1. Client calls POST /api/auth/otp/verify with request_id, email, and otp.
 2. The API loads otp_requests row by UUID.
 3. It checks ownership, expiry, consumed flag, and max attempts.
 4. The hashed OTP is verified.
@@ -181,7 +181,7 @@ How auth/me works
 3. API returns user details plus seller_profile if available.
 
 Important auth details already handled
-- Indian phone normalization
+- Email normalization
 - OTP hashing
 - OTP attempt limits
 - OTP send rate limits
@@ -191,9 +191,9 @@ Important auth details already handled
 - UUID-safe request validation
 - Secure cookie configuration support via settings
 
-Current local SMS behavior
-- If Fast2SMS credentials are absent, development mode logs the OTP flow instead of sending a real SMS.
-- Real provider failure returns SMS_PROVIDER_DOWN.
+Current local email behavior
+- If Resend credentials are absent, development mode logs the OTP flow instead of sending a real email.
+- Real provider failure returns EMAIL_PROVIDER_DOWN.
 
 ======================================================================
 6. USER PROFILE + SELLER ONBOARDING: IMPLEMENTED

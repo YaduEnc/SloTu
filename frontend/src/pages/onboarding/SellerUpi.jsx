@@ -56,7 +56,7 @@ export default function SellerUpi() {
         </Link>
 
         <div className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3">
-          Step 2 of 3 — Payout UPI
+          Step 2 of 2 — Payout UPI
         </div>
         <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tighter">
           Where should we send your earnings?

@@ -20,7 +20,8 @@ def verify_secret(secret: str, hashed: str) -> bool:
 def create_token(
     *,
     subject: str,
-    phone: str,
+    phone: str | None,
+    email: str | None,
     role: str,
     token_type: str,
     ttl_seconds: int,
@@ -30,13 +31,16 @@ def create_token(
     jti = str(uuid.uuid4())
     payload = {
         "sub": subject,
-        "phone": phone,
         "role": role,
         "iat": int(now.timestamp()),
         "exp": int(expires_at.timestamp()),
         "jti": jti,
         "type": token_type,
     }
+    if phone:
+        payload["phone"] = phone
+    if email:
+        payload["email"] = email
     token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
     return token, expires_at, jti
 

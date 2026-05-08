@@ -21,7 +21,7 @@ class User(TimestampMixin, Base):
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
-    phone: Mapped[str] = mapped_column(String(15), unique=True, nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(15), unique=True, nullable=True)
     name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     email: Mapped[str | None] = mapped_column(String(160), unique=True, nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'buyer'"))

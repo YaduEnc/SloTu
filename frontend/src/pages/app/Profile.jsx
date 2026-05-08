@@ -50,20 +50,10 @@ export default function Profile() {
           Your details
         </h1>
         <p className="mt-2 text-zinc-400 text-sm">
-          We use your email for receipts and dispute updates. Phone is locked to your verified number.
+          We use your email for sign-in, receipts, and dispute updates.
         </p>
 
         <form onSubmit={submit} className="mt-10 space-y-6">
-          <Field label="Phone (verified)" testId="profile-field-phone">
-            <Input
-              value={user?.phone || ""}
-              disabled
-              className="bg-zinc-900 border-zinc-800 text-zinc-400 font-mono cursor-not-allowed"
-              data-testid="profile-phone-input"
-            />
-            <Hint>Phone is locked. Contact support to change it.</Hint>
-          </Field>
-
           <Field label="Name" testId="profile-field-name">
             <Input
               value={name}
@@ -85,6 +75,7 @@ export default function Profile() {
               className="bg-zinc-950 border-zinc-800 focus:border-emerald-500 focus-visible:ring-emerald-500/20 text-zinc-100"
               data-testid="profile-email-input"
             />
+            <Hint>This email is used for login and account updates.</Hint>
           </Field>
 
           <Field label="Role" testId="profile-field-role">

@@ -24,7 +24,7 @@ export default function Terms() {
       <H2>1. Eligibility</H2>
       <UL>
         <LI>You must be at least 18 years old and an Indian resident to use Slotu.</LI>
-        <LI>You must have a valid Indian mobile number for OTP verification.</LI>
+        <LI>You must have a valid email address for OTP verification.</LI>
         <LI>Sellers must complete UPI ID verification and Aadhaar OTP verification before listing.</LI>
       </UL>
 

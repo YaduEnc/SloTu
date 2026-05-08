@@ -6,21 +6,21 @@ from app.models.user import User
 from app.services import auth_service, user_service
 
 
-def login_user(client, monkeypatch, *, phone: str, otp: str = "123456") -> dict:
-    async def fake_send(phone_number: str, code: str) -> str:
+def login_user(client, monkeypatch, *, email: str, otp: str = "123456") -> dict:
+    async def fake_send(email_address: str, code: str) -> str:
         return "provider-request-id"
 
     monkeypatch.setattr(auth_service, "generate_otp", lambda: otp)
-    monkeypatch.setattr(auth_service, "send_otp", fake_send)
+    monkeypatch.setattr(auth_service, "send_login_otp_email", fake_send)
 
-    send_response = client.post("/api/auth/otp/send", json={"phone": phone})
+    send_response = client.post("/api/auth/otp/send", json={"email": email})
     assert send_response.status_code == 200
 
     verify_response = client.post(
         "/api/auth/otp/verify",
         json={
             "request_id": send_response.json()["request_id"],
-            "phone": phone,
+            "email": email,
             "otp": otp,
         },
     )
@@ -29,7 +29,7 @@ def login_user(client, monkeypatch, *, phone: str, otp: str = "123456") -> dict:
 
 
 def test_patch_me_updates_name_and_email(client, monkeypatch):
-    login = login_user(client, monkeypatch, phone="9876543210")
+    login = login_user(client, monkeypatch, email="aman@example.com")
 
     response = client.patch(
         "/api/users/me",
@@ -43,7 +43,7 @@ def test_patch_me_updates_name_and_email(client, monkeypatch):
 
 
 def test_patch_me_rejects_duplicate_email(client, monkeypatch):
-    first_login = login_user(client, monkeypatch, phone="9876543210")
+    first_login = login_user(client, monkeypatch, email="aman@example.com")
     response = client.patch(
         "/api/users/me",
         json={"email": "shared@example.com"},
@@ -51,7 +51,7 @@ def test_patch_me_rejects_duplicate_email(client, monkeypatch):
     )
     assert response.status_code == 200
 
-    second_login = login_user(client, monkeypatch, phone="9123456789")
+    second_login = login_user(client, monkeypatch, email="riya@example.com")
     duplicate_response = client.patch(
         "/api/users/me",
         json={"email": "shared@example.com"},
@@ -63,7 +63,7 @@ def test_patch_me_rejects_duplicate_email(client, monkeypatch):
 
 
 def test_become_seller_creates_profile_and_updates_auth_me(client, monkeypatch):
-    login = login_user(client, monkeypatch, phone="9876543210")
+    login = login_user(client, monkeypatch, email="aman@example.com")
 
     become_response = client.post(
         "/api/users/become-seller",
@@ -85,7 +85,7 @@ def test_become_seller_creates_profile_and_updates_auth_me(client, monkeypatch):
 
 
 def test_seller_upi_endpoint_saves_format_valid_upi_and_marks_kyc_submitted(client, monkeypatch):
-    login = login_user(client, monkeypatch, phone="9876543210")
+    login = login_user(client, monkeypatch, email="aman@example.com")
     client.post("/api/users/become-seller", headers={"Authorization": f"Bearer {login['access_token']}"})
 
     response = client.post(
@@ -103,7 +103,7 @@ def test_seller_upi_endpoint_saves_format_valid_upi_and_marks_kyc_submitted(clie
 
 
 def test_seller_upi_rejects_invalid_format(client, monkeypatch):
-    login = login_user(client, monkeypatch, phone="9876543210")
+    login = login_user(client, monkeypatch, email="aman@example.com")
     client.post("/api/users/become-seller", headers={"Authorization": f"Bearer {login['access_token']}"})
 
     response = client.post(
@@ -117,7 +117,7 @@ def test_seller_upi_rejects_invalid_format(client, monkeypatch):
 
 
 def test_aadhaar_send_and_verify_marks_kyc_approved(client, monkeypatch, session_factory):
-    login = login_user(client, monkeypatch, phone="9876543210")
+    login = login_user(client, monkeypatch, email="aman@example.com")
     client.post("/api/users/become-seller", headers={"Authorization": f"Bearer {login['access_token']}"})
 
     monkeypatch.setattr(user_service, "generate_otp", lambda: "654321")
@@ -140,7 +140,7 @@ def test_aadhaar_send_and_verify_marks_kyc_approved(client, monkeypatch, session
     assert verify_response.json()["kyc_status"] == "approved"
 
     with session_factory() as session:
-        user = session.scalar(select(User).where(User.phone == "+919876543210"))
+        user = session.scalar(select(User).where(User.email == "aman@example.com"))
         assert user is not None
         seller_profile = session.scalar(select(SellerProfile).where(SellerProfile.user_id == user.id))
 

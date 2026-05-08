@@ -18,9 +18,9 @@ from app.schemas.user import MeResponse
 from app.services.auth_service import (
     get_me,
     logout,
+    request_email_otp,
     refresh_access_token,
-    request_phone_otp,
-    verify_phone_otp,
+    verify_email_otp,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -49,7 +49,7 @@ async def send_otp_code(
     db: AsyncSession = Depends(get_db),
 ) -> OTPSendResponse:
     ip_address = extract_client_ip(request)
-    return await request_phone_otp(db, payload.phone, ip_address)
+    return await request_email_otp(db, payload.email, ip_address)
 
 
 @router.post("/otp/verify", response_model=LoginResponse, status_code=status.HTTP_200_OK)
@@ -58,11 +58,11 @@ async def verify_otp_code(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ) -> LoginResponse:
-    return await verify_phone_otp(
+    return await verify_email_otp(
         db,
         response,
         request_id=payload.request_id,
-        phone=payload.phone,
+        email=payload.email,
         otp=payload.otp,
     )
 

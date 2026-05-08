@@ -7,6 +7,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/app/Dashboard";
 import Profile from "./pages/app/Profile";
+import AccountSetup from "./pages/onboarding/AccountSetup";
 import BecomeSeller from "./pages/onboarding/BecomeSeller";
 import SellerUpi from "./pages/onboarding/SellerUpi";
 import SellerStatus from "./pages/onboarding/SellerStatus";
@@ -35,6 +36,7 @@ function App() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/seller" element={<ProtectedRoute><SellerStatus /></ProtectedRoute>} />
+            <Route path="/onboarding/account" element={<ProtectedRoute><AccountSetup /></ProtectedRoute>} />
             <Route path="/onboarding/become-seller" element={<ProtectedRoute><BecomeSeller /></ProtectedRoute>} />
             <Route path="/onboarding/upi" element={<ProtectedRoute><SellerUpi /></ProtectedRoute>} />
             <Route path="/onboarding/status" element={<ProtectedRoute><SellerStatus /></ProtectedRoute>} />

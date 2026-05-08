@@ -39,8 +39,8 @@ Frontend implication
 
 These flows are ready for frontend integration now.
 
-Flow A: Phone login
-1. User enters mobile number
+Flow A: Email login
+1. User enters email address
 2. Frontend calls POST /api/auth/otp/send
 3. User enters OTP
 4. Frontend calls POST /api/auth/otp/verify
@@ -88,7 +88,7 @@ Flow F: Optional Aadhaar path
 Recommended immediate page list
 
 1. Login page
-- mobile number input
+- email input
 - send OTP CTA
 - OTP verify step
 - resend and error handling
@@ -99,7 +99,6 @@ Recommended immediate page list
 - if refresh fails, redirect to login
 
 3. Account / Profile page
-- show phone
 - editable name
 - editable email
 - save action via PATCH /api/users/me
@@ -196,14 +195,14 @@ Logout
 
 POST /api/auth/otp/send
 Request
-- { "phone": "+919876543210" } or plain Indian 10-digit number, backend normalizes
+- { "email": "aman@example.com" }
 
 Response
 - { "request_id": "uuid", "expires_in": 300 }
 
 POST /api/auth/otp/verify
 Request
-- { "request_id": "uuid", "phone": "9876543210", "otp": "123456" }
+- { "request_id": "uuid", "email": "aman@example.com", "otp": "123456" }
 
 Response
 - {
@@ -259,7 +258,7 @@ All errors use
 Important error codes frontend should handle explicitly
 
 Auth
-- INVALID_PHONE
+- INVALID_EMAIL
 - RATE_LIMITED
 - OTP_INVALID
 - OTP_EXPIRED

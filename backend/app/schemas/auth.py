@@ -1,12 +1,12 @@
 import uuid
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from app.schemas.user import MeResponse, UserResponse
 
 
 class OTPSendRequest(BaseModel):
-    phone: str
+    email: EmailStr
 
 
 class OTPSendResponse(BaseModel):
@@ -16,7 +16,7 @@ class OTPSendResponse(BaseModel):
 
 class OTPVerifyRequest(BaseModel):
     request_id: uuid.UUID
-    phone: str
+    email: EmailStr
     otp: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 

@@ -20,8 +20,10 @@ export default function AppShell({ children }) {
     navigate("/", { replace: true });
   };
 
+  const primaryIdentity = user?.email || user?.phone || "Account";
+
   const initials =
-    (user?.name || user?.phone || "U")
+    (user?.name || primaryIdentity || "U")
       .split(" ")
       .map((s) => s[0])
       .join("")
@@ -63,7 +65,7 @@ export default function AppShell({ children }) {
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-3">
               <div className="text-right">
-                <div className="text-xs font-mono text-zinc-500">{user?.phone}</div>
+                <div className="text-xs font-mono text-zinc-500">{primaryIdentity}</div>
                 <div className="text-[10px] uppercase tracking-widest text-emerald-400/80 font-mono">{user?.role}</div>
               </div>
               <div className="h-9 w-9 rounded-full bg-emerald-500 text-emerald-950 font-display font-bold flex items-center justify-center">

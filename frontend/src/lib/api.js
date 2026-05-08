@@ -78,9 +78,9 @@ export function asApiError(err) {
 }
 
 export const auth = {
-  sendOtp: (phone) => api.post("/auth/otp/send", { phone }).then((r) => r.data),
-  verifyOtp: (request_id, phone, otp) =>
-    api.post("/auth/otp/verify", { request_id, phone, otp }).then((r) => r.data),
+  sendOtp: (email) => api.post("/auth/otp/send", { email }).then((r) => r.data),
+  verifyOtp: (request_id, email, otp) =>
+    api.post("/auth/otp/verify", { request_id, email, otp }).then((r) => r.data),
   refresh: () => tryRefresh(),
   logout: () => api.post("/auth/logout").then((r) => r.data).catch(() => null),
   me: () => api.get("/auth/me").then((r) => r.data),

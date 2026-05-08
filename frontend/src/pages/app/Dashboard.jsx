@@ -17,7 +17,6 @@ export default function Dashboard() {
     if (!sp) return "no_seller";
     if (!sp.upi_id) return "no_upi";
     if (!sp.upi_verified) return "upi_pending";
-    if (sp.kyc_status !== "approved") return "kyc_pending";
     return "ready";
   }, [user, sp]);
 
@@ -85,7 +84,7 @@ export default function Dashboard() {
         <div className="mt-10 grid sm:grid-cols-3 gap-3">
           <Tip icon={Lock} text="Funds held in escrow until you confirm." />
           <Tip icon={Zap} text="Credentials delivered automatically." />
-          <Tip icon={BadgeCheck} text="Sellers verified with phone + Aadhaar OTP." />
+          <Tip icon={BadgeCheck} text="Login secured by email OTP and seller payouts tracked in-app." />
         </div>
       </div>
     </AppShell>
@@ -98,7 +97,7 @@ function OnboardingBanner({ stage, sp }) {
       Icon: Store,
       tone: "emerald",
       title: "Want to earn from unused slots?",
-      desc: "Become a seller in 2 minutes — phone OTP, UPI, Aadhaar.",
+      desc: "Create your seller profile, add a payout UPI, and start preparing listings.",
       cta: "Become a seller",
       to: "/onboarding/become-seller",
     },
@@ -114,16 +113,8 @@ function OnboardingBanner({ stage, sp }) {
       Icon: Clock,
       tone: "amber",
       title: "Payout UPI submitted",
-      desc: `${sp?.upi_id} is saved. Bank-side verification is pending.`,
+      desc: `${sp?.upi_id} is saved. You're set up for seller onboarding and payout review.`,
       cta: "View status",
-      to: "/onboarding/status",
-    },
-    kyc_pending: {
-      Icon: Clock,
-      tone: "amber",
-      title: "Complete Aadhaar verification",
-      desc: "Final step before you can list slots.",
-      cta: "Verify identity",
       to: "/onboarding/status",
     },
   };

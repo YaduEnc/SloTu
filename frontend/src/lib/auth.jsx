@@ -71,22 +71,27 @@ export function useAuth() {
 /** Decide where to send the user after login or based on profile state. */
 export function nextRouteFor(user) {
   if (!user) return "/login";
-  // Buyers stay on /dashboard. Seller-onboarding routes only if they've expressed intent.
+  if (!user.name?.trim()) return "/onboarding/account";
+  if (user.seller_profile && !user.seller_profile.upi_id) return "/onboarding/upi";
   return "/dashboard";
 }
 
 export function ProtectedRoute({ children }) {
-  const { isAuthed, bootstrapped } = useAuth();
+  const { isAuthed, bootstrapped, user } = useAuth();
   const location = useLocation();
   if (!bootstrapped) return <BootstrapSplash />;
   if (!isAuthed) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  const next = nextRouteFor(user);
+  if (location.pathname !== next && next === "/onboarding/account") {
+    return <Navigate to={next} replace />;
+  }
   return children;
 }
 
 export function PublicOnlyRoute({ children }) {
-  const { isAuthed, bootstrapped } = useAuth();
+  const { isAuthed, bootstrapped, user } = useAuth();
   if (!bootstrapped) return <BootstrapSplash />;
-  if (isAuthed) return <Navigate to="/dashboard" replace />;
+  if (isAuthed) return <Navigate to={nextRouteFor(user)} replace />;
   return children;
 }
 

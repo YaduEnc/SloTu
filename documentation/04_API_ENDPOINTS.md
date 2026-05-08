@@ -24,18 +24,18 @@ Every endpoint is prefixed `/api`. All requests use JSON unless noted. All respo
 ### `POST /api/auth/otp/send`
 Request:
 ```json
-{ "phone": "+919876543210" }
+{ "email": "aman@example.com" }
 ```
-- Validations: E.164 Indian mobile (regex `^\\+91[6-9]\\d{9}$`).
-- Rate limit: 3/min/phone, 10/hour/phone, 30/hour/IP.
-- Sends 6-digit OTP via Fast2SMS. Stores `otp_hash`. TTL 5 min.
+- Validations: valid email address.
+- Rate limit: 3/min/email, 10/hour/email, 30/hour/IP.
+- Sends 6-digit OTP via email. Stores `otp_hash`. TTL 5 min.
 - Response 200: `{ "request_id": "uuid", "expires_in": 300 }`
-- Errors: `INVALID_PHONE`, `RATE_LIMITED`, `SMS_PROVIDER_DOWN`.
+- Errors: `INVALID_EMAIL`, `RATE_LIMITED`, `EMAIL_PROVIDER_DOWN`.
 
 ### `POST /api/auth/otp/verify`
 Request:
 ```json
-{ "request_id": "uuid", "phone": "+919876543210", "otp": "123456" }
+{ "request_id": "uuid", "email": "aman@example.com", "otp": "123456" }
 ```
 - Verifies bcrypt hash. Max 5 attempts.
 - Creates user if first time (role default `buyer`).
@@ -48,9 +48,9 @@ Request:
   "expires_in": 900,
   "user": {
     "id": "uuid",
-    "phone": "+919876543210",
+    "phone": null,
     "name": null,
-    "email": null,
+    "email": "aman@example.com",
     "role": "buyer",
     "created_at": "2026-01-01T00:00:00Z"
   },

@@ -1,14 +1,14 @@
 import ipaddress
-import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
+from email_validator import EmailNotValidError, validate_email
 from fastapi import Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.constants import INDIAN_PHONE_REGEX, OTP_MAX_ATTEMPTS, OTP_TTL_SECONDS
+from app.core.constants import OTP_MAX_ATTEMPTS, OTP_TTL_SECONDS
 from app.core.exceptions import AppError
 from app.core.security import create_token, decode_token, hash_secret, verify_secret
 from app.db import redis_client
@@ -17,40 +17,38 @@ from app.models.seller_profile import SellerProfile
 from app.models.user import User
 from app.schemas.auth import LoginResponse, OTPSendResponse, RefreshResponse
 from app.schemas.user import MeResponse, SellerProfileResponse, UserResponse
-from app.services.otp_service import generate_otp, send_otp
+from app.services.email_service import send_login_otp_email
+from app.services.otp_service import generate_otp
 
 
-def normalize_phone(phone: str) -> str:
-    normalized = re.sub(r"[\s-]", "", phone).strip()
-    if normalized.startswith("0"):
-        normalized = normalized.lstrip("0")
-    if re.fullmatch(r"[6-9]\d{9}", normalized):
-        normalized = f"+91{normalized}"
-    if not re.fullmatch(INDIAN_PHONE_REGEX, normalized):
-        raise AppError(422, "INVALID_PHONE", "Phone number must be a valid Indian mobile", {"field": "phone"})
-    return normalized
+def normalize_email(email: str) -> str:
+    try:
+        normalized = validate_email(email, check_deliverability=False).normalized
+    except EmailNotValidError as exc:
+        raise AppError(422, "INVALID_EMAIL", "Email address must be valid", {"field": "email"}) from exc
+    return normalized.lower()
 
 
-async def _enforce_send_limits(db: AsyncSession, phone: str, ip_address: str | None) -> None:
+async def _enforce_send_limits(db: AsyncSession, email: str, ip_address: str | None) -> None:
     now = datetime.now(timezone.utc)
     per_minute_cutoff = now - timedelta(minutes=1)
     per_hour_cutoff = now - timedelta(hours=1)
     ip_value = ipaddress.ip_address(ip_address) if ip_address else None
 
-    phone_minute = await db.scalar(
+    email_minute = await db.scalar(
         select(func.count()).select_from(OTPRequest).where(
-            OTPRequest.phone == phone,
+            OTPRequest.email == email,
             OTPRequest.created_at >= per_minute_cutoff,
         )
     )
-    phone_hour = await db.scalar(
+    email_hour = await db.scalar(
         select(func.count()).select_from(OTPRequest).where(
-            OTPRequest.phone == phone,
+            OTPRequest.email == email,
             OTPRequest.created_at >= per_hour_cutoff,
         )
     )
 
-    if phone_minute >= 3 or phone_hour >= 10:
+    if email_minute >= 3 or email_hour >= 10:
         raise AppError(429, "RATE_LIMITED", "Too many attempts, try in 1 minute")
 
     if ip_value:
@@ -64,14 +62,14 @@ async def _enforce_send_limits(db: AsyncSession, phone: str, ip_address: str | N
             raise AppError(429, "RATE_LIMITED", "Too many attempts, try in 1 minute")
 
 
-async def request_phone_otp(db: AsyncSession, phone: str, ip_address: str | None) -> OTPSendResponse:
-    normalized_phone = normalize_phone(phone)
-    await _enforce_send_limits(db, normalized_phone, ip_address)
+async def request_email_otp(db: AsyncSession, email: str, ip_address: str | None) -> OTPSendResponse:
+    normalized_email = normalize_email(email)
+    await _enforce_send_limits(db, normalized_email, ip_address)
     ip_value = ipaddress.ip_address(ip_address) if ip_address else None
 
     otp = generate_otp()
     otp_request = OTPRequest(
-        phone=normalized_phone,
+        email=normalized_email,
         otp_hash=hash_secret(otp),
         expires_at=datetime.now(timezone.utc) + timedelta(seconds=OTP_TTL_SECONDS),
         ip_address=ip_value,
@@ -80,8 +78,46 @@ async def request_phone_otp(db: AsyncSession, phone: str, ip_address: str | None
     await db.commit()
     await db.refresh(otp_request)
 
-    provider_request_id = await send_otp(normalized_phone, otp)
+    provider_request_id = await send_login_otp_email(normalized_email, otp)
     return OTPSendResponse(request_id=str(otp_request.id or provider_request_id), expires_in=OTP_TTL_SECONDS)
+
+
+async def _get_or_create_user(db: AsyncSession, normalized_email: str) -> tuple[User, bool]:
+    user = await db.scalar(select(User).where(User.email == normalized_email))
+    is_new_user = user is None
+    if user is None:
+        user = User(email=normalized_email)
+        db.add(user)
+        await db.flush()
+    elif user.email != normalized_email:
+        user.email = normalized_email
+    return user, is_new_user
+
+
+def _build_login_response(response: Response, user: User, is_new_user: bool) -> LoginResponse:
+    access_token, _, _ = create_token(
+        subject=str(user.id),
+        phone=user.phone,
+        email=user.email,
+        role=user.role,
+        token_type="access",
+        ttl_seconds=settings.jwt_access_ttl_seconds,
+    )
+    refresh_token, _, _ = create_token(
+        subject=str(user.id),
+        phone=user.phone,
+        email=user.email,
+        role=user.role,
+        token_type="refresh",
+        ttl_seconds=settings.jwt_refresh_ttl_seconds,
+    )
+    _set_refresh_cookie(response, refresh_token)
+    return LoginResponse(
+        access_token=access_token,
+        expires_in=settings.jwt_access_ttl_seconds,
+        user=UserResponse.model_validate(user),
+        is_new_user=is_new_user,
+    )
 
 
 def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
@@ -97,17 +133,17 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
-async def verify_phone_otp(
+async def verify_email_otp(
     db: AsyncSession,
     response: Response,
     *,
     request_id: uuid.UUID,
-    phone: str,
+    email: str,
     otp: str,
 ) -> LoginResponse:
-    normalized_phone = normalize_phone(phone)
+    normalized_email = normalize_email(email)
     otp_row = await db.get(OTPRequest, request_id)
-    if otp_row is None or otp_row.phone != normalized_phone:
+    if otp_row is None or otp_row.email != normalized_email:
         raise AppError(401, "OTP_INVALID", "Wrong code, try again")
 
     now = datetime.now(timezone.utc)
@@ -125,40 +161,11 @@ async def verify_phone_otp(
         raise AppError(401, "OTP_INVALID", "Wrong code, try again")
 
     otp_row.consumed = True
-
-    user = await db.scalar(select(User).where(User.phone == normalized_phone))
-    is_new_user = user is None
-    if user is None:
-        user = User(phone=normalized_phone)
-        db.add(user)
-        await db.flush()
-
+    user, is_new_user = await _get_or_create_user(db, normalized_email)
     user.last_login_at = now
-
-    access_token, _, _ = create_token(
-        subject=str(user.id),
-        phone=user.phone,
-        role=user.role,
-        token_type="access",
-        ttl_seconds=settings.jwt_access_ttl_seconds,
-    )
-    refresh_token, _, _ = create_token(
-        subject=str(user.id),
-        phone=user.phone,
-        role=user.role,
-        token_type="refresh",
-        ttl_seconds=settings.jwt_refresh_ttl_seconds,
-    )
-    _set_refresh_cookie(response, refresh_token)
     await db.commit()
     await db.refresh(user)
-
-    return LoginResponse(
-        access_token=access_token,
-        expires_in=settings.jwt_access_ttl_seconds,
-        user=UserResponse.model_validate(user),
-        is_new_user=is_new_user,
-    )
+    return _build_login_response(response, user, is_new_user)
 
 
 async def refresh_access_token(response: Response, refresh_token: str | None) -> RefreshResponse:
@@ -177,14 +184,16 @@ async def refresh_access_token(response: Response, refresh_token: str | None) ->
 
     access_token, _, _ = create_token(
         subject=payload["sub"],
-        phone=payload["phone"],
+        phone=payload.get("phone"),
+        email=payload.get("email"),
         role=payload["role"],
         token_type="access",
         ttl_seconds=settings.jwt_access_ttl_seconds,
     )
     new_refresh_token, _, _ = create_token(
         subject=payload["sub"],
-        phone=payload["phone"],
+        phone=payload.get("phone"),
+        email=payload.get("email"),
         role=payload["role"],
         token_type="refresh",
         ttl_seconds=settings.jwt_refresh_ttl_seconds,

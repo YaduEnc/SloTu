@@ -1,25 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Shield, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { Shield, ArrowLeft, ArrowRight, Loader2, Mail } from "lucide-react";
 import { Input } from "../../components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../../components/ui/input-otp";
 import { toast } from "sonner";
 import { Toaster } from "../../components/ui/sonner";
 import { auth, asApiError } from "../../lib/api";
-import { useAuth } from "../../lib/auth";
+import { nextRouteFor, useAuth } from "../../lib/auth";
 
-const phoneOk = (p) => /^\+91[6-9]\d{9}$/.test(p);
-const normalisePhone = (raw) => {
-  const cleaned = (raw || "").replace(/[^\d+]/g, "");
-  if (cleaned.startsWith("+91")) return cleaned;
-  if (cleaned.startsWith("91") && cleaned.length === 12) return `+${cleaned}`;
-  if (/^[6-9]\d{9}$/.test(cleaned)) return `+91${cleaned}`;
-  return cleaned;
-};
+const emailOk = (value) => /^\S+@\S+\.\S+$/.test((value || "").trim());
+const normaliseEmail = (value) => (value || "").trim().toLowerCase();
 
 export default function Login() {
-  const [step, setStep] = useState("phone"); // 'phone' | 'otp'
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState("email");
+  const [email, setEmail] = useState("");
   const [requestId, setRequestId] = useState(null);
   const [otp, setOtp] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(0);
@@ -37,37 +31,40 @@ export default function Login() {
     setSecondsLeft(seconds);
     clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) { clearInterval(intervalRef.current); return 0; }
-        return s - 1;
+      setSecondsLeft((current) => {
+        if (current <= 1) {
+          clearInterval(intervalRef.current);
+          return 0;
+        }
+        return current - 1;
       });
     }, 1000);
   };
 
   const sendOtp = async (e) => {
-    if (e?.preventDefault) e.preventDefault();
-    const normalised = normalisePhone(phone);
-    if (!phoneOk(normalised)) {
-      toast.error("Enter a valid Indian mobile number");
+    e?.preventDefault?.();
+    const normalizedEmail = normaliseEmail(email);
+    if (!emailOk(normalizedEmail)) {
+      toast.error("Enter a valid email address");
       return;
     }
-    setPhone(normalised);
+    setEmail(normalizedEmail);
     setSending(true);
     try {
-      const res = await auth.sendOtp(normalised);
+      const res = await auth.sendOtp(normalizedEmail);
       setRequestId(res.request_id);
       startCountdown(res.expires_in || 300);
       setStep("otp");
       setOtp("");
-      toast.success("OTP sent", { description: `A 6-digit code is on its way to ${normalised}` });
+      toast.success("OTP sent", { description: `A 6-digit code was sent to ${normalizedEmail}` });
     } catch (err) {
-      const e = asApiError(err);
+      const apiError = asApiError(err);
       const map = {
-        INVALID_PHONE: "That phone number isn't valid",
+        INVALID_EMAIL: "That email address is not valid",
         RATE_LIMITED: "Too many attempts. Wait a minute and try again.",
-        SMS_PROVIDER_DOWN: "SMS service is briefly down. Try again shortly.",
+        EMAIL_PROVIDER_DOWN: "Email service is briefly down. Try again shortly.",
       };
-      toast.error(map[e.code] || e.message);
+      toast.error(map[apiError.code] || apiError.message);
     } finally {
       setSending(false);
     }
@@ -79,22 +76,29 @@ export default function Login() {
       toast.error("Enter the 6-digit code");
       return;
     }
+    if (!requestId) {
+      toast.error("Request a fresh code first");
+      setStep("email");
+      return;
+    }
+
     setVerifying(true);
     try {
-      const res = await auth.verifyOtp(requestId, phone, code);
+      const res = await auth.verifyOtp(requestId, email, code);
       completeLogin(res.access_token, res.user);
       toast.success(res.is_new_user ? "Welcome to Slotu!" : "Welcome back");
-      navigate(from === "/login" ? "/dashboard" : from, { replace: true });
+      const target = from !== "/login" && res.user?.name ? from : nextRouteFor(res.user);
+      navigate(target, { replace: true });
     } catch (err) {
-      const e = asApiError(err);
+      const apiError = asApiError(err);
       const map = {
         OTP_INVALID: "Wrong code. Try again.",
         OTP_EXPIRED: "Code expired. Resend a new one.",
         OTP_TOO_MANY_ATTEMPTS: "Too many attempts. Request a fresh code.",
       };
-      toast.error(map[e.code] || e.message);
-      if (e.code === "OTP_EXPIRED" || e.code === "OTP_TOO_MANY_ATTEMPTS") {
-        setStep("phone");
+      toast.error(map[apiError.code] || apiError.message);
+      if (apiError.code === "OTP_EXPIRED" || apiError.code === "OTP_TOO_MANY_ATTEMPTS") {
+        setStep("email");
         setOtp("");
       } else {
         setOtp("");
@@ -104,9 +108,10 @@ export default function Login() {
     }
   };
 
-  // auto-verify when 6 digits entered
   useEffect(() => {
-    if (otp.length === 6 && !verifying) verifyOtp(otp);
+    if (otp.length === 6 && !verifying) {
+      verifyOtp(otp);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otp]);
 
@@ -115,7 +120,11 @@ export default function Login() {
       <div className="absolute inset-0 radial-fade pointer-events-none" />
       <div className="absolute inset-0 dotted-grid opacity-30 pointer-events-none [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
 
-      <Link to="/" data-testid="login-back-home" className="absolute top-6 left-6 inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-500 hover:text-emerald-400 transition-colors">
+      <Link
+        to="/"
+        data-testid="login-back-home"
+        className="absolute top-6 left-6 inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-500 hover:text-emerald-400 transition-colors"
+      >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to home
       </Link>
@@ -129,8 +138,8 @@ export default function Login() {
         </Link>
 
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-xl p-7 md:p-9" data-testid="login-card">
-          {step === "phone" ? (
-            <form onSubmit={sendOtp} data-testid="login-phone-form">
+          {step === "email" ? (
+            <form onSubmit={sendOtp} data-testid="login-email-form">
               <div className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3">
                 Step 1 of 2
               </div>
@@ -138,24 +147,22 @@ export default function Login() {
                 Sign in or create your account
               </h1>
               <p className="mt-3 text-zinc-400 text-sm">
-                We'll send a 6-digit code to your Indian mobile. No passwords, no spam.
+                We&apos;ll send a 6-digit code to your email. No passwords, no SMS delays.
               </p>
 
               <label className="mt-7 block text-xs font-mono uppercase tracking-wider text-zinc-500 mb-2">
-                Mobile number
+                Email address
               </label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-md bg-zinc-950 border border-r-0 border-zinc-800 text-zinc-400 font-mono text-sm">
-                  +91
-                </span>
+              <div className="relative">
+                <Mail className="h-4 w-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="98765 43210"
-                  value={phone.startsWith("+91") ? phone.slice(3) : phone}
-                  onChange={(e) => setPhone(normalisePhone(e.target.value))}
-                  className="rounded-l-none bg-zinc-950 border-zinc-800 focus:border-emerald-500 focus-visible:ring-emerald-500/20 h-11 text-zinc-100 font-mono"
-                  data-testid="login-phone-input"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(normaliseEmail(e.target.value))}
+                  className="pl-10 bg-zinc-950 border-zinc-800 focus:border-emerald-500 focus-visible:ring-emerald-500/20 h-11 text-zinc-100 font-mono"
+                  data-testid="login-email-input"
                 />
               </div>
 
@@ -181,12 +188,12 @@ export default function Login() {
             <div data-testid="login-otp-form">
               <button
                 type="button"
-                onClick={() => { setStep("phone"); setOtp(""); }}
+                onClick={() => { setStep("email"); setOtp(""); }}
                 className="text-xs font-mono uppercase tracking-widest text-zinc-500 hover:text-emerald-400 inline-flex items-center gap-2 mb-3"
                 data-testid="login-otp-back"
               >
                 <ArrowLeft className="h-3 w-3" />
-                Change number
+                Change email
               </button>
 
               <div className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3">
@@ -196,7 +203,7 @@ export default function Login() {
                 Enter the 6-digit code
               </h1>
               <p className="mt-3 text-zinc-400 text-sm">
-                Code sent to <span className="text-zinc-100 font-mono">{phone}</span>
+                Code sent to <span className="text-zinc-100 font-mono">{email}</span>
               </p>
 
               <div className="mt-7">

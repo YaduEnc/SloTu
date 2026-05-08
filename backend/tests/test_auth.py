@@ -12,15 +12,15 @@ from app.services import auth_service
 def issue_otp(client, monkeypatch, otp: str = "123456") -> dict:
     sent = {}
 
-    async def fake_send(phone: str, code: str) -> str:
-        sent["phone"] = phone
+    async def fake_send(email: str, code: str) -> str:
+        sent["email"] = email
         sent["otp"] = code
         return "provider-request-id"
 
     monkeypatch.setattr(auth_service, "generate_otp", lambda: otp)
-    monkeypatch.setattr(auth_service, "send_otp", fake_send)
+    monkeypatch.setattr(auth_service, "send_login_otp_email", fake_send)
 
-    response = client.post("/api/auth/otp/send", json={"phone": "9876543210"})
+    response = client.post("/api/auth/otp/send", json={"email": "aman@example.com"})
     assert response.status_code == 200
 
     payload = response.json()
@@ -28,16 +28,16 @@ def issue_otp(client, monkeypatch, otp: str = "123456") -> dict:
     return payload
 
 
-def test_send_otp_persists_hashed_code_and_normalizes_phone(client, monkeypatch, session_factory):
+def test_send_otp_persists_hashed_code_and_normalizes_email(client, monkeypatch, session_factory):
     payload = issue_otp(client, monkeypatch)
 
     with session_factory() as session:
         otp_row = session.get(OTPRequest, uuid.UUID(payload["request_id"]))
 
     assert payload["expires_in"] == 300
-    assert payload["sent"] == {"phone": "+919876543210", "otp": "123456"}
+    assert payload["sent"] == {"email": "aman@example.com", "otp": "123456"}
     assert otp_row is not None
-    assert otp_row.phone == "+919876543210"
+    assert otp_row.email == "aman@example.com"
     assert verify_secret("123456", otp_row.otp_hash)
     assert otp_row.attempts == 0
     assert otp_row.consumed is False
@@ -50,7 +50,7 @@ def test_verify_otp_creates_user_sets_cookie_and_returns_profile(client, monkeyp
         "/api/auth/otp/verify",
         json={
             "request_id": send_payload["request_id"],
-            "phone": "9876543210",
+            "email": "aman@example.com",
             "otp": "654321",
         },
     )
@@ -59,7 +59,7 @@ def test_verify_otp_creates_user_sets_cookie_and_returns_profile(client, monkeyp
     body = verify_response.json()
     assert body["token_type"] == "Bearer"
     assert body["is_new_user"] is True
-    assert body["user"]["phone"] == "+919876543210"
+    assert body["user"]["email"] == "aman@example.com"
     assert settings.refresh_cookie_name in verify_response.cookies
 
     me_response = client.get(
@@ -71,9 +71,9 @@ def test_verify_otp_creates_user_sets_cookie_and_returns_profile(client, monkeyp
 
     with session_factory() as session:
         otp_row = session.get(OTPRequest, uuid.UUID(send_payload["request_id"]))
-        user = session.scalar(select(User).where(User.phone == "+919876543210"))
+        user = session.scalar(select(User).where(User.email == "aman@example.com"))
     assert otp_row is not None and otp_row.consumed is True
-    assert user is not None and user.phone == "+919876543210"
+    assert user is not None and user.email == "aman@example.com"
 
 
 def test_verify_otp_enforces_attempt_limit(client, monkeypatch, session_factory):
@@ -84,7 +84,7 @@ def test_verify_otp_enforces_attempt_limit(client, monkeypatch, session_factory)
             "/api/auth/otp/verify",
             json={
                 "request_id": send_payload["request_id"],
-                "phone": "+919876543210",
+                "email": "aman@example.com",
                 "otp": "000000",
             },
         )
@@ -105,7 +105,7 @@ def test_refresh_rotates_cookie_and_logout_clears_session(client, monkeypatch):
         "/api/auth/otp/verify",
         json={
             "request_id": send_payload["request_id"],
-            "phone": "+919876543210",
+            "email": "aman@example.com",
             "otp": "222222",
         },
     )

@@ -13,7 +13,7 @@
  *  - All money fields end in `_paise` and are integer paise (₹1 = 100 paise).
  *  - All datetimes are ISO 8601 UTC strings ending in 'Z'.
  *  - All IDs are UUID v4 strings.
- *  - All phone numbers are E.164 +91XXXXXXXXXX.
+ *  - Any phone numbers that appear are E.164 +91XXXXXXXXXX.
  *  - Pagination: { items, total, page, page_size }.
  *  - Errors: see `ApiErrorEnvelope`.
  */
@@ -36,10 +36,9 @@ export interface ApiErrorEnvelope {
 }
 
 export type ApiErrorCode =
-  | "INVALID_PHONE"
   | "INVALID_EMAIL"
   | "RATE_LIMITED"
-  | "SMS_PROVIDER_DOWN"
+  | "EMAIL_PROVIDER_DOWN"
   | "OTP_INVALID"
   | "OTP_EXPIRED"
   | "OTP_TOO_MANY_ATTEMPTS"
@@ -148,7 +147,7 @@ export type NotificationType =
 // =============================================================================
 
 export interface OtpSendRequest {
-  phone: PhoneE164;
+  email: string;
 }
 export interface OtpSendResponse {
   request_id: UUID;
@@ -157,7 +156,7 @@ export interface OtpSendResponse {
 
 export interface OtpVerifyRequest {
   request_id: UUID;
-  phone: PhoneE164;
+  email: string;
   otp: string;               // 6-digit
 }
 export interface OtpVerifyResponse {
@@ -179,7 +178,7 @@ export interface RefreshResponse {
 
 export interface User {
   id: UUID;
-  phone: PhoneE164;
+  phone: PhoneE164 | null;
   name: string | null;
   email: string | null;
   role: UserRole;

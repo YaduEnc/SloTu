@@ -64,14 +64,14 @@ export default function BecomeSeller() {
           <span className="text-zinc-500">into monthly income.</span>
         </h1>
         <p className="mt-5 text-zinc-400 max-w-xl">
-          You'll add a payout UPI and verify your identity once. After that, you can list any number of slots.
+          You'll add a payout UPI once, and we'll keep your seller profile ready for listing access.
           We hold every buyer's payment in escrow — you only get paid when access is confirmed.
         </p>
 
         <div className="mt-10 grid sm:grid-cols-3 gap-3">
           <Step n="01" Icon={Store} title="Become a seller" desc="One-tap. We create your seller profile." />
           <Step n="02" Icon={Lock} title="Add payout UPI" desc="Where we'll send your earnings." />
-          <Step n="03" Icon={BadgeCheck} title="Aadhaar OTP" desc="Builds buyer trust. Aadhaar number never stored." />
+          <Step n="03" Icon={BadgeCheck} title="Review status" desc="See onboarding progress and update payout details anytime." />
         </div>
 
         <div className="mt-10 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-zinc-900/40 p-6 md:p-8">

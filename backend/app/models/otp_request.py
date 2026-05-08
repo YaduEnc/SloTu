@@ -12,7 +12,7 @@ from app.models.mixins import CreatedAtMixin
 class OTPRequest(CreatedAtMixin, Base):
     __tablename__ = "otp_requests"
     __table_args__ = (
-        Index("idx_otp_phone_created", "phone", "created_at"),
+        Index("idx_otp_email_created", "email", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -20,7 +20,7 @@ class OTPRequest(CreatedAtMixin, Base):
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     )
-    phone: Mapped[str] = mapped_column(String(15), nullable=False)
+    email: Mapped[str] = mapped_column(String(160), nullable=False)
     otp_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     attempts: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default=text("0"))
     consumed: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("FALSE"))
