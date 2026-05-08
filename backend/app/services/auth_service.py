@@ -1,3 +1,4 @@
+import ipaddress
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -34,6 +35,7 @@ async def _enforce_send_limits(db: AsyncSession, phone: str, ip_address: str | N
     now = datetime.now(timezone.utc)
     per_minute_cutoff = now - timedelta(minutes=1)
     per_hour_cutoff = now - timedelta(hours=1)
+    ip_value = ipaddress.ip_address(ip_address) if ip_address else None
 
     phone_minute = await db.scalar(
         select(func.count()).select_from(OTPRequest).where(
@@ -51,10 +53,10 @@ async def _enforce_send_limits(db: AsyncSession, phone: str, ip_address: str | N
     if phone_minute >= 3 or phone_hour >= 10:
         raise AppError(429, "RATE_LIMITED", "Too many attempts, try in 1 minute")
 
-    if ip_address:
+    if ip_value:
         ip_hour = await db.scalar(
             select(func.count()).select_from(OTPRequest).where(
-                OTPRequest.ip_address == ip_address,
+                OTPRequest.ip_address == ip_value,
                 OTPRequest.created_at >= per_hour_cutoff,
             )
         )
@@ -65,13 +67,14 @@ async def _enforce_send_limits(db: AsyncSession, phone: str, ip_address: str | N
 async def request_phone_otp(db: AsyncSession, phone: str, ip_address: str | None) -> OTPSendResponse:
     normalized_phone = normalize_phone(phone)
     await _enforce_send_limits(db, normalized_phone, ip_address)
+    ip_value = ipaddress.ip_address(ip_address) if ip_address else None
 
     otp = generate_otp()
     otp_request = OTPRequest(
         phone=normalized_phone,
         otp_hash=hash_secret(otp),
         expires_at=datetime.now(timezone.utc) + timedelta(seconds=OTP_TTL_SECONDS),
-        ip_address=ip_address,
+        ip_address=ip_value,
     )
     db.add(otp_request)
     await db.commit()
